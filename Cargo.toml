@@ -1,0 +1,12 @@
+[package]
+name = "simple_shield"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+aztec_backend = { git = "https://github.com/noir-lang/noir", branch = "master" }
+acvm = { git = "https://github.com/noir-lang/noir", branch = "master" }
+tempfile = "3.2.0"
+blake2 = "0.9.1"
