@@ -1,0 +1,123 @@
+{
+  "_format": "hh-sol-cache-2",
+  "files": {
+    "/Users/maximvezenov/Documents/dev/noir-projects/simple_shield/contracts/plonk_vk.sol": {
+      "lastModificationDate": 1658956870256,
+      "contentHash": "57d94bdce748d7e233b33afd9c6b20ef",
+      "sourceName": "contracts/plonk_vk.sol",
+      "solcConfig": {
+        "version": "0.6.10",
+        "settings": {
+          "evmVersion": "istanbul",
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "hardhat/console.sol"
+      ],
+      "versionPragmas": [
+        ">=0.6.0 <0.8.0"
+      ],
+      "artifacts": [
+        "Bn254Crypto",
+        "PolynomialEval",
+        "TranscriptLibrary",
+        "TurboPlonk",
+        "TurboVerifier",
+        "Types"
+      ]
+    },
+    "/Users/maximvezenov/Documents/dev/noir-projects/simple_shield/contracts/PrivateTransfer.sol": {
+      "lastModificationDate": 1658954298542,
+      "contentHash": "3d379c24f9db593c2a56956bbcec94c9",
+      "sourceName": "contracts/PrivateTransfer.sol",
+      "solcConfig": {
+        "version": "0.6.10",
+        "settings": {
+          "evmVersion": "istanbul",
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "hardhat/console.sol"
+      ],
+      "versionPragmas": [
+        ">=0.6.0 <0.8.0"
+      ],
+      "artifacts": [
+        "IVerifier",
+        "PrivateTransfer"
+      ]
+    },
+    "/Users/maximvezenov/Documents/dev/noir-projects/simple_shield/node_modules/hardhat/console.sol": {
+      "lastModificationDate": 1658867045852,
+      "contentHash": "cc4777addd464ea56fa35b1c45df0591",
+      "sourceName": "hardhat/console.sol",
+      "solcConfig": {
+        "version": "0.6.10",
+        "settings": {
+          "evmVersion": "istanbul",
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.4.22 <0.9.0"
+      ],
+      "artifacts": [
+        "console"
+      ]
+    }
+  }
+}
