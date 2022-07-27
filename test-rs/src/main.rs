@@ -52,7 +52,8 @@ fn main() {
     }).collect();
 
     // NOTE: This block of code (until leaf is printed) gives the incorrect root and leaf as it uses blake2s to generate the note_commitment rather than pedersen
-    //let note_commitment_bytes = note_commitment.0.to_bytes();
+    // TODO: possibly switch to just using blake2s everywhere for at least testing the PR  
+    // let note_commitment_bytes = note_commitment.0.to_bytes();
     let new_root = tree.update_message(0, &res2.0.to_bytes()[..]);
     println!("new_root: {:?}", new_root.to_hex());
     let leaf = hash(&res2.0.to_bytes()[..]);

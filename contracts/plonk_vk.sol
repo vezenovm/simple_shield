@@ -5,6 +5,8 @@
 pragma solidity >=0.6.0 <0.8.0;
 pragma experimental ABIEncoderV2;
 
+import "hardhat/console.sol";
+
 /**
  * @title Turbo Plonk proof verification contract
  * @dev Top level Plonk proof verification contract, which allows Plonk proof to be verified
@@ -29,13 +31,16 @@ contract TurboVerifier {
 
     // The first parameter is the proof and the second parameter is the public inputs
     function verify(bytes calldata, bytes calldata) public view returns (bool) {
-        
+
         Types.VerificationKey memory vk = get_verification_key();
         uint256 num_public_inputs = vk.num_inputs;
 
         // parse the input calldata and construct a Proof object
         Types.Proof memory decoded_proof = deserialize_proof(num_public_inputs, vk);
-
+        console.log(
+        "num_public_inputs",
+            num_public_inputs
+        );
         TranscriptLibrary.Transcript memory transcript = TranscriptLibrary.new_transcript(
             vk.circuit_size,
             vk.num_inputs
@@ -417,6 +422,9 @@ contract TurboVerifier {
         }
 
         assembly {  
+            let public_input_byte_length := mul(num_public_inputs, 0x20)
+            data_ptr := add(data_ptr, public_input_byte_length)
+
             // proof.W1
             mstore(mload(proof_ptr), mod(calldataload(add(data_ptr, 0x20)), q))
             mstore(add(mload(proof_ptr), 0x20), mod(calldataload(data_ptr), q))

@@ -4,6 +4,7 @@ pragma solidity >=0.6.0 <0.8.0;
 
 // import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 // import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "hardhat/console.sol";
 
 interface IVerifier {
     function verify(bytes calldata, bytes calldata) external view returns (bool);
@@ -17,8 +18,8 @@ contract PrivateTransfer {
     mapping(bytes32 => bool) public nullifierHashes;
     // we store all commitments just to prevent accidental deposits with the same commitment
     // these have been switched to an array 
-    //mapping(bytes32 => bool) public commitments;
-    uint256[] public commitments;
+    mapping(uint256 => bool) public commitments;
+    // uint256[] public commitments;
 
     IVerifier public verifier;
 
@@ -31,13 +32,32 @@ contract PrivateTransfer {
         bytes32 _root,
         uint256[] memory _commitments
         // Hasher _hasher Will need a hasher to switch to an on-chain merkle tree
-    ) {
+    ) public payable {
         require(_amount > 0, "denomination should be greater than zero");
         verifier = _verifier;
         amount = _amount;
         root = _root;
-        commitments = _commitments;
+        for (uint i = 0; i < _commitments.length; i++) {
+            commitments[_commitments[i]] = true;
+                    console.log(
+                "checking commitment passed on deployment",
+                _commitments[i]
+            );
+        }
     }
+
+    // function initialize(
+    //     IVerifier _verifier,
+    //     uint256 _amount,
+    //     bytes32 _root,
+    //     uint256[] memory _commitments
+    // ) public initializer {
+    //     require(_amount > 0, "denomination should be greater than zero");
+    //     verifier = _verifier;
+    //     amount = _amount;
+    //     root = _root;
+    //     commitments = _commitments;
+    // }
 
     function withdraw(
         bytes calldata proof,
@@ -47,9 +67,14 @@ contract PrivateTransfer {
         bytes32 _nullifierHash,
         address payable _recipient
     ) external payable {
-        require(commitments[commitment] != 0, "Commitment is not found in the set!");
         require(!nullifierHashes[_nullifierHash], "The note has been already spent");
         require(root == _root, "Cannot find your merkle root");
+        console.log(
+        "checking commitment passed into withdraw function",
+            commitment
+        );
+        require(commitments[commitment], "Commitment is not found in the set!");
+
         require(verifier.verify(proof, public_inputs), "Invalid withdraw proof");
         
         // Set nullifier hash to true
