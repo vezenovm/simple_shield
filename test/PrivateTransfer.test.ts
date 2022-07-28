@@ -62,7 +62,7 @@ describe("mixer withdraw", () => {
     // proof is not pre-pended with public inputs
     let proofBuffer = await readFileSync(path.resolve(__dirname,`../circuits/proofs/p.proof`));
 
-    // console.log('proof buffer string', proofBuffer.toString());
+    // console.log('proof buffer hex string', proofBuffer.toString());
     let proofBytes = hexToBytes(proofBuffer.toString());
     // console.log('proof bytes ', JSON.stringify(proofBytes));
     console.log('proof bytes ', proofBytes);
@@ -86,13 +86,10 @@ describe("mixer withdraw", () => {
     console.log('pub inputs encoded calldata', pubInputsCallData);
     
     let proof = [...mergedRawPubInputs, ...proofBytes];
-    let proofCallData = abiCoder.encode([ "bytes" ], [ proof ]);
-    let proofCallDataSliced = `0x` + abiCoder.encode([ "bytes" ], [ proof ]).slice(66);
-    console.log('proof encoded calldata', proofCallData);
     // console.log('prepended proof array as bytes', JSON.stringify(proof));
+    let proofCallData = abiCoder.encode([ "bytes" ], [ proof ]);
+    console.log('proof encoded calldata', proofCallData);
 
-
-    // const public_inputs = [...mergedRawPubInputs];    
     let commitment = "0x2ab135000c911caaf6fcc25eeeace4ea8be41f3531b2596c0c1a7ac22eb11b57";
     let nullifierHash = "0x0c9d3bdae689f66e3bc77823326726d140a48e989a1047ab25a9b6398b107118";
     let root = "0x1221a375f6b4305e493497805102054f2847790244f92d09f6e859c083be2627";
@@ -114,33 +111,20 @@ describe("mixer withdraw", () => {
     ])
     console.log('full withdraw calldata', fullWithdrawCallData);
 
-    let verifyABI = ["function verify(bytes calldata, bytes calldata) public view returns (bool)"]
-    let verifyIface = new utils.Interface(verifyABI);
-    let verifyCallData = verifyIface.encodeFunctionData("verify", [
-      proof,
-      pubInputsByteArray
-    ])
-    console.log('full verify calldata', verifyCallData);
-
     // perform withdraw
     const before = await provider.getBalance(recipient);
     // let res = await privateTransfer.withdraw(...args);
 
     // Using generated calldata for withdraw method in PrivateTransfer.sol
-    // const txData = await provider.call({
-    //   to: privateTransfer.address,
-    //   data: fullWithdrawCallData
-    // })
-    // console.log('return data: ', txData)
-    // iface.decodeFunctionResult("withdraw", txData);
+    const txData = await provider.call({
+      to: privateTransfer.address,
+      data: fullWithdrawCallData
+    })
+    console.log('return data: ', txData)
+    iface.decodeFunctionResult("withdraw", txData);
 
     // Simply calling verify method for the TurboVerifier
-    const txData = await provider.call({
-      to: verifier.address,
-      data: verifyCallData
-    });
-    let decodedResult = verifyIface.decodeFunctionResult("verify", txData);
-    console.log('decoded result ', decodedResult);
+    // await callTurboVerifier(proof, pubInputsByteArray)
 
     const after = await provider.getBalance(recipient);
     // check results
@@ -180,21 +164,19 @@ function hexListToBytes(list: string[]) {
   return mergedRawPubInputs
 }
 
-// let fullCallData = ethers.utils.hexConcat([
-//   '0x5715411e', 
-//   ethers.utils.defaultAbiCoder.encode([
-//     'bytes', 
-//     'bytes',
-//     'bytes32',
-//     'uint256',
-//     'bytes32',
-//     'address'
-//   ], [
-//     proof, 
-//     pubInputsByteArray,
-//     root,
-//     commitment,
-//     nullifierHash,
-//     recipient
-//   ])
-// ])
+async function callTurboVerifier(proof: number[], pub_inputs: number[]) {
+  let verifyABI = ["function verify(bytes calldata, bytes calldata) public view returns (bool)"]
+  let verifyIface = new utils.Interface(verifyABI);
+  let verifyCallData = verifyIface.encodeFunctionData("verify", [
+    proof,
+    pub_inputs
+  ])
+  console.log('full verify calldata', verifyCallData);
+
+  const txData = await provider.call({
+    to: verifier.address,
+    data: verifyCallData
+  });
+  let decodedResult = verifyIface.decodeFunctionResult("verify", txData);
+  console.log('decoded result ', decodedResult);
+}
