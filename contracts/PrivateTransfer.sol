@@ -63,20 +63,37 @@ contract PrivateTransfer {
         bytes calldata proof,
         bytes calldata public_inputs,
         bytes32 _root,
-        uint256 commitment,
+        uint256 _commitment,
         bytes32 _nullifierHash,
         address payable _recipient
     ) external payable {
         require(!nullifierHashes[_nullifierHash], "The note has been already spent");
+        console.log(
+            "nullifier hash passed into withdraw function"
+        );
+        console.logBytes32(
+            _nullifierHash
+        );
         require(root == _root, "Cannot find your merkle root");
         console.log(
         "checking commitment passed into withdraw function",
-            commitment
+            _commitment
         );
-        require(commitments[commitment], "Commitment is not found in the set!");
-
+        require(commitments[_commitment], "Commitment is not found in the set!");
+        console.log(
+            "proof calldata passed into withdraw function"
+        );
+        console.logBytes(
+            proof
+        );
+        console.log(
+            "public_inputs calldata passed into withdraw function"
+        );
+        console.logBytes(
+            public_inputs
+        );
         require(verifier.verify(proof, public_inputs), "Invalid withdraw proof");
-        
+        console.log('verified withdrawal');
         // Set nullifier hash to true
         nullifierHashes[_nullifierHash] = true;
 

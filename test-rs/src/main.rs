@@ -9,6 +9,7 @@ fn main() {
     // Just have these panic for now
     let to_pubkey_x = FieldElement::from_hex("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap();
     let to_pubkey_y = FieldElement::from_hex("0x0000000000000002cf135e7506a45d632d270d45f1181294833fc48d823f272c").unwrap();
+    
     let index = FieldElement::zero();
     let mut barretenberg = Barretenberg::new();
     let priv_key = FieldElement::from_hex("0x000000000000000000000000000000000000000000000000000000616c696365").unwrap();
