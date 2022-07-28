@@ -121,10 +121,12 @@ describe("mixer withdraw", () => {
       pubInputsByteArray
     ])
     console.log('full verify calldata', verifyCallData);
-    // abi.encodeWithSignature('setXY(uint256,uint256)', x, y);
+
     // perform withdraw
     const before = await provider.getBalance(recipient);
     // let res = await privateTransfer.withdraw(...args);
+
+    // Using generated calldata for withdraw method in PrivateTransfer.sol
     // const txData = await provider.call({
     //   to: privateTransfer.address,
     //   data: fullWithdrawCallData
@@ -132,6 +134,7 @@ describe("mixer withdraw", () => {
     // console.log('return data: ', txData)
     // iface.decodeFunctionResult("withdraw", txData);
 
+    // Simply calling verify method for the TurboVerifier
     const txData = await provider.call({
       to: verifier.address,
       data: verifyCallData
