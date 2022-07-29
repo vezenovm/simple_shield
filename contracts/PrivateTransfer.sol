@@ -34,6 +34,11 @@ contract PrivateTransfer {
         // Hasher _hasher Will need a hasher to switch to an on-chain merkle tree
     ) public payable {
         require(_amount > 0, "denomination should be greater than zero");
+        require(msg.value > 0, "value of commitments to withdraw must be greater than zero");
+        console.log(
+            'msg.value on deploy',
+            msg.value
+        );
         verifier = _verifier;
         amount = _amount;
         root = _root;
@@ -66,7 +71,7 @@ contract PrivateTransfer {
         uint256 _commitment,
         bytes32 _nullifierHash,
         address payable _recipient
-    ) external payable {
+    ) public payable {
         require(!nullifierHashes[_nullifierHash], "The note has been already spent");
         console.log(
             "nullifier hash passed into withdraw function"
@@ -97,10 +102,14 @@ contract PrivateTransfer {
         // Set nullifier hash to true
         nullifierHashes[_nullifierHash] = true;
 
-        require(msg.value == 0, "msg.value is supposed to be zero for ETH instance");
+        require(msg.value == 0, "msg.value is supposed to be zero");
+        console.log('amount: ', amount);
 
-        (bool success, ) = _recipient.call{value: amount}("");
+        console.log('contract balance: ', address(this).balance);
+        // (bool success, ) = _recipient.call{value: amount}("");
+        bool success = _recipient.send(amount);
         require(success, "payment to _recipient did not go thru");
+        console.log('successful withdrawal: ', success);
 
         emit Withdrawal(_recipient, _nullifierHash);
     }

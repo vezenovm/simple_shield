@@ -421,8 +421,8 @@ contract TurboVerifier {
         }
 
         assembly {  
-            let public_input_byte_length := mul(num_public_inputs, 0x20)
-            data_ptr := add(data_ptr, public_input_byte_length)
+            // let public_input_byte_length := mul(num_public_inputs, 0x20)
+            // data_ptr := add(data_ptr, public_input_byte_length)
 
             // proof.W1
             mstore(mload(proof_ptr), mod(calldataload(add(data_ptr, 0x20)), q))
