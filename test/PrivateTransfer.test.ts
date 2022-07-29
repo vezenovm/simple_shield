@@ -37,6 +37,10 @@ before(async () => {
   PrivateTransfer = await ethers.getContractFactory("PrivateTransfer");
   Verifier = await ethers.getContractFactory("TurboVerifier");
   signers = await ethers.getSigners();
+  for (const signer of signers) {
+    console.log(signer.address);
+  }
+  // signers[1].connect(provider);
   // console.log('signers ', signers);
 });
 
@@ -90,8 +94,8 @@ describe("mixer withdraw", () => {
     let commitment = "0x2ab135000c911caaf6fcc25eeeace4ea8be41f3531b2596c0c1a7ac22eb11b57";
     let nullifierHash = "0x0c9d3bdae689f66e3bc77823326726d140a48e989a1047ab25a9b6398b107118";
     let root = "0x1221a375f6b4305e493497805102054f2847790244f92d09f6e859c083be2627";
-    let recipient = signers[0].address;
-    let args = [proof, pubInputsByteArray, root, commitment, nullifierHash, recipient];
+    let recipient = signers[1].address;
+    let args = [[...proofBytes], pubInputsByteArray, root, commitment, nullifierHash, recipient];
 
     // generate withdraw input (nullifier, commitment, etc)
 
@@ -106,7 +110,7 @@ describe("mixer withdraw", () => {
       nullifierHash,
       recipient
     ])
-    console.log('full withdraw calldata', fullWithdrawCallData);
+    // console.log('full withdraw calldata', fullWithdrawCallData);
 
     // perform withdraw
     const before = await provider.getBalance(recipient);
@@ -115,18 +119,25 @@ describe("mixer withdraw", () => {
     // let res = await privateTransfer.withdraw(...args);
 
     // Using generated calldata for withdraw method in PrivateTransfer.sol
-    const txData = await provider.call({
-      to: privateTransfer.address,
-      data: fullWithdrawCallData
-    })
-    console.log('return data: ', txData)
-    let decodedResult = iface.decodeFunctionResult("withdraw", txData);
-    console.log('decoded result', decodedResult);
+    // const txData = await provider.call({
+    //   to: privateTransfer.address,
+    //   data: fullWithdrawCallData
+    // })
+    // console.log('return data: ', txData)
+    // let decodedResult = iface.decodeFunctionResult("withdraw", txData);
+    // console.log('decoded result', decodedResult);
+
+    await privateTransfer.withdraw(...args);
     // Simply calling verify method for the TurboVerifier
-    // await callTurboVerifier(proof, pubInputsByteArray)
+    // await callTurboVerifier([...proofBytes], pubInputsByteArray)
+
+    privateTransfer.on('Withdrawal', (x, y) => {
+      console.log('event', x, y);
+    });
 
     const after = await provider.getBalance(recipient);
-    console.log('after ', after);
+    console.log('after: ', after);
+    console.log('contract balance after: ', await provider.getBalance(privateTransfer.address));
     // check results
     expect(after.sub(before)).to.equal(privateTransactionAmount);
   });

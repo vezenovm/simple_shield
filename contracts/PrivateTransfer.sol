@@ -71,7 +71,7 @@ contract PrivateTransfer {
         uint256 _commitment,
         bytes32 _nullifierHash,
         address payable _recipient
-    ) public payable {
+    ) external payable {
         require(!nullifierHashes[_nullifierHash], "The note has been already spent");
         console.log(
             "nullifier hash passed into withdraw function"
@@ -85,20 +85,21 @@ contract PrivateTransfer {
             _commitment
         );
         require(commitments[_commitment], "Commitment is not found in the set!");
-        console.log(
-            "proof calldata passed into withdraw function"
-        );
-        console.logBytes(
-            proof
-        );
-        console.log(
-            "public_inputs calldata passed into withdraw function"
-        );
-        console.logBytes(
-            public_inputs
-        );
-        require(verifier.verify(proof, public_inputs), "Invalid withdraw proof");
-        console.log('verified withdrawal');
+        // console.log(
+        //     "proof calldata passed into withdraw function"
+        // );
+        // console.logBytes(
+        //     proof
+        // );
+        // console.log(
+        //     "public_inputs calldata passed into withdraw function"
+        // );
+        // console.logBytes(
+        //     public_inputs
+        // );
+        bool proofResult = verifier.verify(proof, public_inputs);
+        require(proofResult, "Invalid withdraw proof");
+        console.log('verified withdrawal: ', proofResult);
         // Set nullifier hash to true
         nullifierHashes[_nullifierHash] = true;
 
@@ -106,10 +107,11 @@ contract PrivateTransfer {
         console.log('amount: ', amount);
 
         console.log('contract balance: ', address(this).balance);
-        // (bool success, ) = _recipient.call{value: amount}("");
-        bool success = _recipient.send(amount);
+        (bool success, ) = _recipient.call{value: amount}("");
         require(success, "payment to _recipient did not go thru");
         console.log('successful withdrawal: ', success);
+        console.log('recipient balance: ', _recipient.balance);
+
 
         emit Withdrawal(_recipient, _nullifierHash);
     }

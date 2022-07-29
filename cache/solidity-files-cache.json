@@ -81,8 +81,8 @@
       ]
     },
     "/Users/maximvezenov/Documents/dev/noir-projects/simple_shield/contracts/PrivateTransfer.sol": {
-      "lastModificationDate": 1659056117985,
-      "contentHash": "571284c9e8d8f5098a5fb9dd2c28c34b",
+      "lastModificationDate": 1659110190252,
+      "contentHash": "fc886e08c24afb99dbb6e2395e526703",
       "sourceName": "contracts/PrivateTransfer.sol",
       "solcConfig": {
         "version": "0.6.10",
