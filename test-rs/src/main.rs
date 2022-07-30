@@ -15,11 +15,13 @@ fn main() {
     let priv_key = FieldElement::from_hex("0x000000000000000000000000000000000000000000000000000000616c696365").unwrap();
     println!("val: {:?}", priv_key);
     let res2 = barretenberg.fixed_base(&priv_key);
+    println!("pubkey_x.0 as num: {:?}", res2.0);
     println!("pubkey_x.0: {:?}", res2.0.to_hex());
     println!("pubkey_y.1: {:?}", res2.1.to_hex());
 
     // let pubkey_vec = vec![res2.0.to_bytes(), res2.1.to_bytes()];
     let note_commitment = barretenberg.encrypt(vec![res2.0, res2.1]);
+    println!("note_commitment.0 as num: {:?}", note_commitment.0);
     println!("note_commitment.0: {:?}", note_commitment.0.to_hex());
     println!("note_commitment.1: {:?}", note_commitment.1.to_hex());
 
@@ -100,7 +102,6 @@ pub fn check_membership(
         current = compress_native(&mut barretenberg, &hash_left, &hash_right);
         println!("current {}: {:?}", i, current.to_hex());
     }
-    println!("current: {:?}", current.to_hex());
     // if &current == root {
     //     FieldElement::one()
     // } else {

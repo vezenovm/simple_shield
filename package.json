@@ -26,6 +26,7 @@
     "zkp-merkle-airdrop-lib": "^1.0.5"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^4.7.1"
+    "@openzeppelin/contracts": "^4.7.1",
+    "toml": "^3.0.0"
   }
 }
