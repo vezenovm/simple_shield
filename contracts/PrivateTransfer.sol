@@ -34,6 +34,11 @@ contract PrivateTransfer {
         // Hasher _hasher Will need a hasher to switch to an on-chain merkle tree
     ) public payable {
         require(_amount > 0, "denomination should be greater than zero");
+        require(msg.value > 0, "value of commitments to withdraw must be greater than zero");
+        console.log(
+            'msg.value on deploy',
+            msg.value
+        );
         verifier = _verifier;
         amount = _amount;
         root = _root;
@@ -63,27 +68,50 @@ contract PrivateTransfer {
         bytes calldata proof,
         bytes calldata public_inputs,
         bytes32 _root,
-        uint256 commitment,
+        uint256 _commitment,
         bytes32 _nullifierHash,
         address payable _recipient
     ) external payable {
         require(!nullifierHashes[_nullifierHash], "The note has been already spent");
+        console.log(
+            "nullifier hash passed into withdraw function"
+        );
+        console.logBytes32(
+            _nullifierHash
+        );
         require(root == _root, "Cannot find your merkle root");
         console.log(
         "checking commitment passed into withdraw function",
-            commitment
+            _commitment
         );
-        require(commitments[commitment], "Commitment is not found in the set!");
-
-        require(verifier.verify(proof, public_inputs), "Invalid withdraw proof");
-        
+        require(commitments[_commitment], "Commitment is not found in the set!");
+        // console.log(
+        //     "proof calldata passed into withdraw function"
+        // );
+        // console.logBytes(
+        //     proof
+        // );
+        // console.log(
+        //     "public_inputs calldata passed into withdraw function"
+        // );
+        // console.logBytes(
+        //     public_inputs
+        // );
+        bool proofResult = verifier.verify(proof, public_inputs);
+        require(proofResult, "Invalid withdraw proof");
+        console.log('verified withdrawal: ', proofResult);
         // Set nullifier hash to true
         nullifierHashes[_nullifierHash] = true;
 
-        require(msg.value == 0, "msg.value is supposed to be zero for ETH instance");
+        require(msg.value == 0, "msg.value is supposed to be zero");
+        console.log('amount: ', amount);
 
+        console.log('contract balance: ', address(this).balance);
         (bool success, ) = _recipient.call{value: amount}("");
         require(success, "payment to _recipient did not go thru");
+        console.log('successful withdrawal: ', success);
+        console.log('recipient balance: ', _recipient.balance);
+
 
         emit Withdrawal(_recipient, _nullifierHash);
     }
