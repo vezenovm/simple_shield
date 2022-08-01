@@ -23,17 +23,6 @@ let signers: SignerWithAddress[];
 let commitments: string[] = [];
 let root = "";
 
-// TODO: Weird stuff with importing circomlib, will have to circle back, I might've setup TS wrong and need to import types
-// currently not finding babyJub or pedersen
-/** Compute pedersen hash */
-// export function pedersen(data: any[]): string {
-//   return babyJub.unpackPoint(pedersenHash.hash(data))[0].toString();
-// }
-// export function pedersenLeftRight(left: string, right: string): string {
-//   // let combinedBuffer = Buffer.concat([left, right]);
-//   return pedersen([left, right])
-// }
-
 before(async () => {
   PrivateTransfer = await ethers.getContractFactory("PrivateTransfer");
   Verifier = await ethers.getContractFactory("TurboVerifier");
@@ -51,7 +40,6 @@ beforeEach(async function () {
 describe("mixer withdraw", () => {
   it("should work", async () => {
     const privateTransactionAmount = utils.parseEther("1.0");
-    const abiCoder = new utils.AbiCoder;
     // const tree = new MerkleTree(3);
     // tree.insert(commitments[0]);
 
@@ -81,18 +69,10 @@ describe("mixer withdraw", () => {
     // verify proof and perform withdraw
     // NOTE: curently being done by nargo and fetched from circuits folder rather than running wasm file
     const before = await provider.getBalance(recipient);
-    console.log('before ', before);
-    console.log('private transfer contract ', await provider.getBalance(privateTransfer.address));
     await privateTransfer.withdraw(...args);
     // Simply calling verify method for the TurboVerifier
     // await callTurboVerifier([...proofBytes], pubInputsByteArray)
-    privateTransfer.on('Withdrawal', (x, y) => {
-      console.log('event', x, y);
-    });
-
     const after = await provider.getBalance(recipient);
-    console.log('after: ', after);
-    console.log('contract balance after: ', await provider.getBalance(privateTransfer.address));
     // check results
     expect(after.sub(before)).to.equal(privateTransactionAmount);
   });
@@ -143,6 +123,17 @@ async function callTurboVerifier(proof: number[], pub_inputs: number[]) {
   let decodedResult = verifyIface.decodeFunctionResult("verify", txData);
   console.log('decoded result ', decodedResult);
 }
+
+// TODO: Weird stuff with importing circomlib, will have to circle back, I might've setup TS wrong and need to import types
+// currently not finding babyJub or pedersen
+/** Compute pedersen hash */
+// export function pedersen(data: any[]): string {
+//   return babyJub.unpackPoint(pedersenHash.hash(data))[0].toString();
+// }
+// export function pedersenLeftRight(left: string, right: string): string {
+//   // let combinedBuffer = Buffer.concat([left, right]);
+//   return pedersen([left, right])
+// }
 
 
 
