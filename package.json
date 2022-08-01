@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^4.7.1",
+    "@typechain/ethers-v5": "^10.1.0",
     "toml": "^3.0.0"
   }
 }
