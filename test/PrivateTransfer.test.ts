@@ -6,8 +6,6 @@ import { expect } from "chai";
 import { readFileSync } from 'fs';
 import path from 'path';
 import toml from 'toml';
-import { Pedersen, PooledPedersen } from 'barretenberg/crypto/pedersen';
-import { BarretenbergWasm, WorkerPool } from 'barretenberg/wasm';
 // @ts-ignore
 // import { plonk } from "snarkjs";
 // @ts-ignore
@@ -29,16 +27,6 @@ before(async () => {
   PrivateTransfer = await ethers.getContractFactory("PrivateTransfer");
   Verifier = await ethers.getContractFactory("TurboVerifier");
   signers = await ethers.getSigners();
-
-  const barretenberg = await BarretenbergWasm.new();
-  const numWorkers = nextLowestPowerOf2(8);
-  let workerPool = await WorkerPool.new(barretenberg, numWorkers);
-
-  let pedersen = new PooledPedersen(barretenberg, workerPool);
-  let x = Buffer.from("0000000000000000000000000000000000000000000000000000000000000001", "hex");
-  let y = Buffer.from("0000000000000002cf135e7506a45d632d270d45f1181294833fc48d823f272c", "hex");
-  let hashRes = pedersen.compressInputs([x, y]);
-  console.log('pedersen res: ', hashRes);
 });
 
 beforeEach(async function () {

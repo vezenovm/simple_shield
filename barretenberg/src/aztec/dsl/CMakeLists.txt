@@ -1,1 +1,0 @@
-barretenberg_module(dsl composer stdlib_primitives stdlib_sha256 stdlib_blake2s stdlib_pedersen stdlib_merkle_tree stdlib_schnorr sha256)
