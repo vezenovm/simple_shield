@@ -124,6 +124,10 @@ async function callTurboVerifier(proof: number[], pub_inputs: number[]) {
   console.log('decoded result ', decodedResult);
 }
 
+function nextLowestPowerOf2(n: number) {
+  return Math.pow(2, Math.floor(Math.log(n) / Math.log(2)));
+}
+
 // TODO: Weird stuff with importing circomlib, will have to circle back, I might've setup TS wrong and need to import types
 // currently not finding babyJub or pedersen
 /** Compute pedersen hash */
