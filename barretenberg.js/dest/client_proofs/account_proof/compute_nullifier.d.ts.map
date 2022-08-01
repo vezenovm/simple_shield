@@ -1,0 +1,1 @@
+{"version":3,"file":"compute_nullifier.d.ts","sourceRoot":"","sources":["../../../src/client_proofs/account_proof/compute_nullifier.ts"],"names":[],"mappings":";AAAA,OAAO,EAAE,QAAQ,EAAE,MAAM,uBAAuB,CAAC;AAEjD,OAAO,EAAE,cAAc,EAAE,MAAM,qBAAqB,CAAC;AAErD,wBAAgB,8BAA8B,CAAC,cAAc,EAAE,cAAc,EAAE,QAAQ,EAAE,QAAQ,UAKhG"}

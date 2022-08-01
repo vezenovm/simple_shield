@@ -1,0 +1,8 @@
+import { numToUInt32BE } from '../../serialize';
+export function computeAccountAliasIdNullifier(accountAliasId, pedersen) {
+    const accountAliasIdIndex = 21;
+    const proofId = 1;
+    const prefixBuf = numToUInt32BE(proofId, 32);
+    return pedersen.compressWithHashIndex([prefixBuf, accountAliasId.toBuffer()], accountAliasIdIndex);
+}
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiY29tcHV0ZV9udWxsaWZpZXIuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi8uLi8uLi9zcmMvY2xpZW50X3Byb29mcy9hY2NvdW50X3Byb29mL2NvbXB1dGVfbnVsbGlmaWVyLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiJBQUNBLE9BQU8sRUFBRSxhQUFhLEVBQUUsTUFBTSxpQkFBaUIsQ0FBQztBQUdoRCxNQUFNLFVBQVUsOEJBQThCLENBQUMsY0FBOEIsRUFBRSxRQUFrQjtJQUMvRixNQUFNLG1CQUFtQixHQUFHLEVBQUUsQ0FBQztJQUMvQixNQUFNLE9BQU8sR0FBRyxDQUFDLENBQUM7SUFDbEIsTUFBTSxTQUFTLEdBQUcsYUFBYSxDQUFDLE9BQU8sRUFBRSxFQUFFLENBQUMsQ0FBQztJQUM3QyxPQUFPLFFBQVEsQ0FBQyxxQkFBcUIsQ0FBQyxDQUFDLFNBQVMsRUFBRSxjQUFjLENBQUMsUUFBUSxFQUFFLENBQUMsRUFBRSxtQkFBbUIsQ0FBQyxDQUFDO0FBQ3JHLENBQUMifQ==

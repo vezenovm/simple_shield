@@ -1,0 +1,99 @@
+import { RollupProvider } from './rollup_provider';
+import { fetch } from '../iso_fetch';
+import { ServerBlockSource } from '../block_source';
+import { Proof } from '../rollup_provider';
+import { TxHash } from '../tx_hash';
+import { blockchainStatusFromJson } from '../blockchain';
+
+export interface TxPostData {
+  proofData: string;
+  viewingKeys: string[];
+  depositSignature?: string;
+  parentProof?: TxPostData;
+}
+
+const toTxPostData = ({ proofData, viewingKeys, depositSignature, parentProof }: Proof): TxPostData => ({
+  proofData: proofData.toString('hex'),
+  viewingKeys: viewingKeys.map(v => v.toString()),
+  depositSignature: depositSignature ? depositSignature.toString('hex') : undefined,
+  parentProof: parentProof ? toTxPostData(parentProof) : undefined,
+});
+
+export class ServerRollupProvider extends ServerBlockSource implements RollupProvider {
+  constructor(baseUrl: URL, pollInterval = 10000) {
+    super(baseUrl, pollInterval);
+  }
+
+  async sendProof(proof: Proof) {
+    const url = new URL(`${this.baseUrl}/tx`);
+    const data = toTxPostData(proof);
+    const response = await fetch(url.toString(), { method: 'POST', body: JSON.stringify(data) }).catch(() => undefined);
+    if (!response) {
+      throw new Error('Failed to contact rollup provider.');
+    }
+    if (response.status === 400) {
+      const body = await response.json();
+      throw new Error(body.error);
+    }
+    if (response.status !== 200) {
+      throw new Error(`Bad response code ${response.status}.`);
+    }
+    const body = await response.json();
+    return TxHash.fromString(body.txHash);
+  }
+
+  async getStatus() {
+    const url = new URL(`${this.baseUrl}/status`);
+    const response = await fetch(url.toString()).catch(() => undefined);
+    if (!response) {
+      throw new Error('Failed to contact rollup provider.');
+    }
+    try {
+      const { txFees, blockchainStatus, nextPublishTime, ...rest } = await response.json();
+
+      return {
+        ...rest,
+        blockchainStatus: blockchainStatusFromJson(blockchainStatus),
+        txFees: txFees.map(({ feeConstants, baseFeeQuotes }) => ({
+          feeConstants: feeConstants.map(r => BigInt(r)),
+          baseFeeQuotes: baseFeeQuotes.map(({ fee, time }) => ({
+            time,
+            fee: BigInt(fee),
+          })),
+        })),
+        nextPublishTime: new Date(nextPublishTime),
+      };
+    } catch (err) {
+      throw new Error(`Bad response from: ${url}`);
+    }
+  }
+
+  async getPendingTxs() {
+    const url = new URL(`${this.baseUrl}/get-pending-txs`);
+
+    const response = await fetch(url.toString());
+    if (response.status !== 200) {
+      throw new Error(`Bad response code ${response.status}.`);
+    }
+
+    const txIds = (await response.json()) as string[];
+    return txIds.map(txId => TxHash.fromString(txId));
+  }
+
+  async getPendingNoteNullifiers() {
+    const url = new URL(`${this.baseUrl}/get-pending-note-nullifiers`);
+
+    const response = await fetch(url.toString());
+    if (response.status !== 200) {
+      throw new Error(`Bad response code ${response.status}.`);
+    }
+
+    const nullifiers = (await response.json()) as string[];
+    return nullifiers.map(n => Buffer.from(n, 'hex'));
+  }
+
+  async clientLog(log: any) {
+    const url = new URL(`${this.baseUrl}/client-log`);
+    await fetch(url.toString(), { method: 'POST', body: JSON.stringify(log) }).catch(() => undefined);
+  }
+}
