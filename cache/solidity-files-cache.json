@@ -49,11 +49,10 @@
       "contentHash": "cc4777addd464ea56fa35b1c45df0591",
       "sourceName": "hardhat/console.sol",
       "solcConfig": {
-        "version": "0.6.10",
+        "version": "0.8.0",
         "settings": {
-          "evmVersion": "istanbul",
           "optimizer": {
-            "enabled": true,
+            "enabled": false,
             "runs": 200
           },
           "outputSelection": {
@@ -81,15 +80,14 @@
       ]
     },
     "/Users/maximvezenov/Documents/dev/noir-projects/simple_shield/contracts/PrivateTransfer.sol": {
-      "lastModificationDate": 1659110190252,
-      "contentHash": "fc886e08c24afb99dbb6e2395e526703",
+      "lastModificationDate": 1659368414566,
+      "contentHash": "255762233da34adee1cac07e2ec72e80",
       "sourceName": "contracts/PrivateTransfer.sol",
       "solcConfig": {
-        "version": "0.6.10",
+        "version": "0.8.0",
         "settings": {
-          "evmVersion": "istanbul",
           "optimizer": {
-            "enabled": true,
+            "enabled": false,
             "runs": 200
           },
           "outputSelection": {
@@ -109,14 +107,50 @@
         }
       },
       "imports": [
+        "@openzeppelin/contracts/security/ReentrancyGuard.sol",
         "hardhat/console.sol"
       ],
       "versionPragmas": [
-        ">=0.6.0 <0.8.0"
+        ">=0.6.0 <0.8.1"
       ],
       "artifacts": [
         "IVerifier",
         "PrivateTransfer"
+      ]
+    },
+    "/Users/maximvezenov/Documents/dev/noir-projects/simple_shield/node_modules/@openzeppelin/contracts/security/ReentrancyGuard.sol": {
+      "lastModificationDate": 1658871498651,
+      "contentHash": "92f9448b23a90ea3bb932ee55cc3ccce",
+      "sourceName": "@openzeppelin/contracts/security/ReentrancyGuard.sol",
+      "solcConfig": {
+        "version": "0.8.0",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "ReentrancyGuard"
       ]
     }
   }

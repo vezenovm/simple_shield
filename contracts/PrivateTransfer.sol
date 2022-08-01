@@ -1,16 +1,15 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.6.0 <0.8.0;
+pragma solidity >=0.6.0 <0.8.1;
 
-// import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-// import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "hardhat/console.sol";
 
 interface IVerifier {
     function verify(bytes calldata, bytes calldata) external view returns (bool);
 }
 
-contract PrivateTransfer {
+contract PrivateTransfer is ReentrancyGuard {
     // amount deposited for each commitment
     uint256 public amount;
     bytes32 public root;
@@ -32,7 +31,7 @@ contract PrivateTransfer {
         bytes32 _root,
         uint256[] memory _commitments
         // Hasher _hasher Will need a hasher to switch to an on-chain merkle tree
-    ) public payable {
+    ) payable {
         require(_amount > 0, "denomination should be greater than zero");
         require(msg.value > 0, "value of commitments to withdraw must be greater than zero");
         verifier = _verifier;
@@ -50,7 +49,7 @@ contract PrivateTransfer {
         uint256 _commitment,
         bytes32 _nullifierHash,
         address payable _recipient
-    ) external payable {
+    ) external payable nonReentrant {
         require(!nullifierHashes[_nullifierHash], "The note has been already spent");
 
         require(root == _root, "Cannot find your merkle root");
