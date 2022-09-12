@@ -42,9 +42,8 @@
   },
   "dependencies": {
     "@aztec/barretenberg": "^2.1.37",
-    "@noir-lang/barretenberg": "^2.7.0",
+    "@noir-lang/barretenberg": "^2.8.0",
     "@noir-lang/noir_wasm": "^0.3.0",
-    "@noir-lang/noir-js": "^0.3.0",
     "@openzeppelin/contracts": "^4.7.1",
     "@typechain/ethers-v5": "^10.1.0",
     "bigint-buffer": "^1.1.5",

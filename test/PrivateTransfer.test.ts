@@ -6,20 +6,16 @@ import { expect } from "chai";
 import { readFileSync } from 'fs';
 import path from 'path';
 import toml from 'toml';
-import { Pedersen, PooledPedersen, SinglePedersen } from '@aztec/barretenberg/crypto/pedersen';
-import { BarretenbergWasm, WorkerPool } from '@aztec/barretenberg/wasm';
+// import { Pedersen, PooledPedersen, SinglePedersen } from '@aztec/barretenberg/crypto/pedersen';
+// import { BarretenbergWasm, WorkerPool } from '@aztec/barretenberg/wasm';
 import { toBufferBE } from 'bigint-buffer';
 import { compile } from '@noir-lang/noir_wasm';
 import { setup_generic_prover_and_verifier, create_proof, verify_proof } from '@noir-lang/barretenberg/dest/client_proofs';
+import { BarretenbergWasm } from '@noir-lang/barretenberg/dest/wasm';
+import { SinglePedersen } from '@noir-lang/barretenberg/dest/crypto/pedersen';
 // import { compile } from '@noir-lang/noir-js';
 
-// @ts-ignore
-// import { plonk } from "snarkjs";
-// @ts-ignore
-// import { babyJub, pedersenHash, circomlib } from "circomlibjs";
 import { MerkleTree } from "../utils/MerkleTree";
-// @ts-ignore
-// const { babyJub, pedersenHash } = require("circomlib");
 
 const amount = process.env.ETH_AMOUNT || "1000000000000000000"; // 1 ether
 
