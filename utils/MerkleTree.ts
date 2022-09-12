@@ -1,6 +1,8 @@
 // const circomlib = require("circomlib");
 // import { mimcsponge } from "circomlibjs";
 // const circomlibjs = require('circomlibjs');
+import { Pedersen, SinglePedersen } from '@aztec/barretenberg/crypto/pedersen';
+import { BarretenbergWasm } from '@aztec/barretenberg/wasm';
 // @ts-ignore
 const circomlibjs = require('circomlibjs');
 
@@ -21,9 +23,15 @@ export function pedersenHash(data: any[]): string {
   return hash.toString();
 }
 
-export function pedersenLeftRight(left: string, right: string): string {
-    // let combinedBuffer = Buffer.concat([left, right]);
-    return pedersenHash([left, right])
+export function pedersenLeftRight(
+  barretenberg: BarretenbergWasm, 
+  left: string, 
+  right: string): string {
+    let leftBuffer = Buffer.from(left, 'hex');
+    let rightBuffer = Buffer.from(right, 'hex');
+    let pedersen = new SinglePedersen(barretenberg);
+    let hashRes = pedersen.compress(leftBuffer, rightBuffer);
+    return hashRes.toString('hex')
 }
 
 export interface IMerkleTree {
@@ -38,26 +46,32 @@ export interface IMerkleTree {
 }
 
 export class MerkleTree implements IMerkleTree {
-  readonly zeroValue = "21663839004416932945382355908790599225266501822907911457504978515578255421292";
+  readonly zeroValue = "1cdcf02431ba623767fe389337d011df1048dcc24b98ed81cec97627bab454a0";
 
   levels: number;
-  hashLeftRight: (left: string, right: string) => string;
+  hashLeftRight: (barretenberg: BarretenbergWasm, left: string, right: string) => string;
   storage: Map<string, string>;
   zeros: string[];
   totalLeaves: number;
+  barretenberg: BarretenbergWasm;
 
-  constructor(levels: number, defaultLeaves: string[] = [], hashLeftRight = pedersenLeftRight) {
+  constructor(
+    levels: number, 
+    barretenberg: BarretenbergWasm,
+    defaultLeaves: string[] = [], 
+    hashLeftRight = pedersenLeftRight) {
     this.levels = levels;
     this.hashLeftRight = hashLeftRight;
     this.storage = new Map();
     this.zeros = [];
     this.totalLeaves = 0;
+    this.barretenberg = barretenberg;
 
     // build zeros depends on tree levels
     let currentZero = this.zeroValue;
     this.zeros.push(currentZero);
     for (let i = 0; i < levels; i++) {
-      currentZero = this.hashLeftRight(currentZero, currentZero);
+      currentZero = this.hashLeftRight(barretenberg, currentZero, currentZero);
       this.zeros.push(currentZero);
     }
 
@@ -82,7 +96,7 @@ export class MerkleTree implements IMerkleTree {
           const right = this.storage.get(rightKey) || this.zeros[level - 1];
           if (!left) throw new Error("leftKey not found");
 
-          const node = this.hashLeftRight(left, right);
+          const node = this.hashLeftRight(barretenberg, left, right);
           this.storage.set(MerkleTree.indexToKey(level, i), node);
         }
         numberOfNodesInLevel = Math.ceil(numberOfNodesInLevel / 2);
@@ -164,7 +178,7 @@ export class MerkleTree implements IMerkleTree {
         key: MerkleTree.indexToKey(level, currentIndex),
         value: currentElement,
       });
-      currentElement = this.hashLeftRight(left, right);
+      currentElement = this.hashLeftRight(this.barretenberg, left, right);
     };
 
     this.traverse(index, handleIndex);

@@ -6,22 +6,29 @@ use aztec_backend::acvm_interop::pwg::merkle::{MerkleTree};
 use tempfile::tempdir;
 
 fn main() {
+    let mut barretenberg = Barretenberg::new();
+
     // Just have these panic for now
     let to_pubkey_x = FieldElement::from_hex("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap();
-    let to_pubkey_y = FieldElement::from_hex("0x0000000000000002cf135e7506a45d632d270d45f1181294833fc48d823f272c").unwrap();
-    
+    let to_pubkey_y = FieldElement::from_hex("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap();
+    println!("to_pubkey_x: {:?}", to_pubkey_x);
+    let receiver_compress_native = barretenberg.compress_native(&to_pubkey_x, &to_pubkey_y);
+    println!("receiver_compress_native: {:?}", receiver_compress_native.to_hex());
+    // println!("receiver_compress_native bytes: {:?}", receiver_compress_native.to_bytes());
+
+    let receiver_compress_many = barretenberg.compress_many(vec![to_pubkey_x]);
+    println!("receiver_compress_many: {:?}", receiver_compress_many.to_hex());
+    // println!("receiver_compress_many bytes: {:?}", receiver_compress_many.to_bytes());
+
     let index = FieldElement::zero();
-    let mut barretenberg = Barretenberg::new();
     let priv_key = FieldElement::from_hex("0x000000000000000000000000000000000000000000000000000000616c696365").unwrap();
     println!("val: {:?}", priv_key);
     let res2 = barretenberg.fixed_base(&priv_key);
-    println!("pubkey_x.0 as num: {:?}", res2.0);
     println!("pubkey_x.0: {:?}", res2.0.to_hex());
     println!("pubkey_y.1: {:?}", res2.1.to_hex());
 
     // let pubkey_vec = vec![res2.0.to_bytes(), res2.1.to_bytes()];
     let note_commitment = barretenberg.encrypt(vec![res2.0, res2.1]);
-    println!("note_commitment.0 as num: {:?}", note_commitment.0);
     println!("note_commitment.0: {:?}", note_commitment.0.to_hex());
     println!("note_commitment.1: {:?}", note_commitment.1.to_hex());
 
@@ -57,15 +64,15 @@ fn main() {
     // NOTE: This block of code (until leaf is printed) gives the incorrect root and leaf as it uses blake2s to generate the note_commitment rather than pedersen
     // TODO: possibly switch to just using blake2s everywhere for at least testing the PR  
     // let note_commitment_bytes = note_commitment.0.to_bytes();
-    let new_root = tree.update_message(0, &res2.0.to_bytes()[..]);
-    println!("new_root: {:?}", new_root.to_hex());
-    let leaf = hash(&res2.0.to_bytes()[..]);
-    println!("leaf: {:?}", leaf.to_hex());
+    // let new_root = tree.update_message(0, &res2.0.to_bytes()[..]);
+    // println!("new_root: {:?}", new_root.to_hex());
+    // let leaf = hash(&res2.0.to_bytes()[..]);
+    // println!("leaf: {:?}", leaf.to_hex());
 
     // Was being used when checking for correctness, currently I just want the program to find the correct root
     // let new_root_pedersen = FieldElement::from_hex("0x1221a375f6b4305e493497805102054f2847790244f92d09f6e859c083be2627").unwrap();
     let root = check_membership(note_hash_path, &index, &note_commitment.0);
-    println!("check_membership: {:?}", root);
+    // println!("check_membership: {:?}", root);
 
     // {
     //     name: "basic case",
@@ -97,10 +104,10 @@ pub fn check_membership(
         let path_bit = index_bits[i];
         let (hash_left, hash_right) =
             if !path_bit { (current, *path_elem) } else { (*path_elem, current) };
-        println!("hash_left {}: {:?}", i, hash_left.to_hex());
-        println!("hash_right {}: {:?}", i, hash_right.to_hex());
+        // println!("hash_left {}: {:?}", i, hash_left.to_hex());
+        // println!("hash_right {}: {:?}", i, hash_right.to_hex());
         current = compress_native(&mut barretenberg, &hash_left, &hash_right);
-        println!("current {}: {:?}", i, current.to_hex());
+        // println!("current {}: {:?}", i, current.to_hex());
     }
     // if &current == root {
     //     FieldElement::one()

@@ -6,7 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-aztec_backend = { git = "https://github.com/noir-lang/noir", branch = "master" }
-acvm = { git = "https://github.com/noir-lang/noir", branch = "master" }
+# aztec_backend = { git = "https://github.com/noir-lang/aztec_backend" }
+aztec_backend = { path = "../../../noir-backends/aztec_backend" }
+# acvm = { git = "https://github.com/noir-lang/noir" }
+acvm = { path = "../../../noir/crates/acvm", features = ["bn254"] }
+
 tempfile = "3.2.0"
 blake2 = "0.9.1"
