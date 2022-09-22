@@ -3,5 +3,6 @@ artifacts
 typechain-types
 
 proofs
+build
 
 target

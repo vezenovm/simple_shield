@@ -48,8 +48,8 @@ export interface IMerkleTree {
 }
 
 export class MerkleTree implements IMerkleTree {
-  readonly zeroValue = "1cdcf02431ba623767fe389337d011df1048dcc24b98ed81cec97627bab454a0";
-
+  // readonly zeroValue = "1cdcf02431ba623767fe389337d011df1048dcc24b98ed81cec97627bab454a0";
+  readonly zeroValue = "0000000000000000000000000000000000000000000000000000000000000000";
   levels: number;
   hashLeftRight: (barretenberg: BarretenbergWasm, left: string, right: string) => string;
   storage: Map<string, string>;

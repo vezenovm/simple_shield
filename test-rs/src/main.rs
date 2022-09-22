@@ -1,6 +1,7 @@
 // use aztec_backend::barretenberg_rs::scalar_mul;
 // use aztec_backend::barretenberg_rs::pedersen;
-use aztec_backend::barretenberg_rs::Barretenberg;
+// use aztec_backend::barretenberg_rs::Barretenberg;
+use aztec_backend::barretenberg_wasm::Barretenberg;
 use acvm::FieldElement;
 use aztec_backend::acvm_interop::pwg::merkle::{MerkleTree};
 use tempfile::tempdir;
@@ -10,15 +11,13 @@ fn main() {
 
     // Just have these panic for now
     let to_pubkey_x = FieldElement::from_hex("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap();
-    let to_pubkey_y = FieldElement::from_hex("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap();
+    let to_pubkey_y = FieldElement::from_hex("0x0000000000000002cf135e7506a45d632d270d45f1181294833fc48d823f272c").unwrap();
     println!("to_pubkey_x: {:?}", to_pubkey_x);
     let receiver_compress_native = barretenberg.compress_native(&to_pubkey_x, &to_pubkey_y);
     println!("receiver_compress_native: {:?}", receiver_compress_native.to_hex());
-    // println!("receiver_compress_native bytes: {:?}", receiver_compress_native.to_bytes());
 
     let receiver_compress_many = barretenberg.compress_many(vec![to_pubkey_x]);
     println!("receiver_compress_many: {:?}", receiver_compress_many.to_hex());
-    // println!("receiver_compress_many bytes: {:?}", receiver_compress_many.to_bytes());
 
     let index = FieldElement::zero();
     let priv_key = FieldElement::from_hex("0x000000000000000000000000000000000000000000000000000000616c696365").unwrap();
@@ -61,30 +60,19 @@ fn main() {
         x
     }).collect();
 
-    // NOTE: This block of code (until leaf is printed) gives the incorrect root and leaf as it uses blake2s to generate the note_commitment rather than pedersen
-    // TODO: possibly switch to just using blake2s everywhere for at least testing the PR  
+    // NOTE: This block of code (until leaf is printed) gives the incorrect root and leaf as it uses blake2s to generate the note_commitment rather than pedersen 
     // let note_commitment_bytes = note_commitment.0.to_bytes();
     // let new_root = tree.update_message(0, &res2.0.to_bytes()[..]);
     // println!("new_root: {:?}", new_root.to_hex());
     // let leaf = hash(&res2.0.to_bytes()[..]);
     // println!("leaf: {:?}", leaf.to_hex());
 
-    // Was being used when checking for correctness, currently I just want the program to find the correct root
-    // let new_root_pedersen = FieldElement::from_hex("0x1221a375f6b4305e493497805102054f2847790244f92d09f6e859c083be2627").unwrap();
     let root = check_membership(note_hash_path, &index, &note_commitment.0);
-    // println!("check_membership: {:?}", root);
+    println!("check_membership: {:?}", root.to_hex());
 
-    // {
-    //     name: "basic case",
-    //     a: "3d937c035c878245caf64531a5756109c53068da139362728feb561405371cb",
-    //     b: "208a0a10250e382e1e4bbe2880906c2791bf6275695e02fbbc6aeff9cd8b31a",
-    //     expected: "30e480bed5fe53fa909cc0f8c4d99b8f9f2c016be4c41e13a4848797979c662",
-    //   },
-    // let a = FieldElement::from_hex("0x3d937c035c878245caf64531a5756109c53068da139362728feb561405371cb").unwrap();
-    // let b = FieldElement::from_hex("0x208a0a10250e382e1e4bbe2880906c2791bf6275695e02fbbc6aeff9cd8b31a").unwrap();
-    // let test_pedersen_1 = barretenberg.encrypt(vec![a, b]);
-    // println!("test_pedersen_1.0: {:?}", test_pedersen_1.0.to_hex());
-    // println!("test_pedersen_1.1: {:?}", test_pedersen_1.1.to_hex());
+    tree.update_leaf(0, note_commitment.0);
+    let expected_root = tree.root();
+    println!("expected_root: {:?}", expected_root.to_hex());
 }
 
 pub fn check_membership(
@@ -104,16 +92,8 @@ pub fn check_membership(
         let path_bit = index_bits[i];
         let (hash_left, hash_right) =
             if !path_bit { (current, *path_elem) } else { (*path_elem, current) };
-        // println!("hash_left {}: {:?}", i, hash_left.to_hex());
-        // println!("hash_right {}: {:?}", i, hash_right.to_hex());
         current = compress_native(&mut barretenberg, &hash_left, &hash_right);
-        // println!("current {}: {:?}", i, current.to_hex());
     }
-    // if &current == root {
-    //     FieldElement::one()
-    // } else {
-    //     FieldElement::zero()
-    // }
     current
 }
 
@@ -123,14 +103,4 @@ fn compress_native(
     right: &FieldElement,
 ) -> FieldElement {
     barretenberg.compress_native(left, right)
-}
-
-// NOTE: this was for when I was debating to use blake2s in Noir, but went back to using pedersen
-fn hash(message: &[u8]) -> FieldElement {
-    use blake2::Digest;
-
-    let mut hasher = blake2::Blake2s::new();
-    hasher.update(message);
-    let res = hasher.finalize();
-    FieldElement::from_be_bytes_reduce(&res[..])
 }

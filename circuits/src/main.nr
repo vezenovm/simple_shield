@@ -8,12 +8,12 @@ fn main(
   // Merkle membership proof
   note_root : pub Field, 
   index : Field,
-  note_hash_path : [3]Field,
+  note_hash_path : [Field; 3],
 
   // Receiver public key
   to_pubkey_x : Field, 
   to_pubkey_y : Field, 
-) -> pub [2]Field {
+) -> pub [Field; 2] {
 
     // Compute public key from private key to show ownership
     let pubkey = std::scalar_mul::fixed_base(priv_key);

@@ -1,4 +1,6 @@
 import { ethers } from "hardhat";
+import levelup from 'levelup';
+import memdown from 'memdown';
 const { provider } = ethers;
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Contract, ContractFactory, utils } from "ethers";
@@ -8,13 +10,14 @@ import path from 'path';
 import toml from 'toml';
 // import { Pedersen, PooledPedersen, SinglePedersen } from '@aztec/barretenberg/crypto/pedersen';
 // import { BarretenbergWasm, WorkerPool } from '@aztec/barretenberg/wasm';
-import { toBufferBE } from 'bigint-buffer';
-import { compile } from '@noir-lang/noir_wasm';
-import { setup_generic_prover_and_verifier, create_proof, verify_proof } from '@noir-lang/barretenberg/dest/client_proofs';
+// import { toBufferBE } from 'bigint-buffer';
+import { compile, acir_from_bytes, acir_to_bytes } from '@noir-lang/noir_wasm';
+import { setup_generic_prover_and_verifier, create_proof, verify_proof, create_proof_with_witness } from '@noir-lang/barretenberg/dest/client_proofs';
 import { BarretenbergWasm } from '@noir-lang/barretenberg/dest/wasm';
 import { SinglePedersen } from '@noir-lang/barretenberg/dest/crypto/pedersen';
-// import { compile } from '@noir-lang/noir-js';
-
+import { Schnorr } from '@noir-lang/barretenberg/dest/crypto/schnorr';
+import { packed_witness_to_witness, serialise_public_inputs, compute_witnesses } from '@noir-lang/aztec_backend';
+// import { MerkleTree } from '@noir-lang/barretenberg/dest/merkle_tree/merkle_tree';
 import { MerkleTree } from "../utils/MerkleTree";
 
 const amount = process.env.ETH_AMOUNT || "1000000000000000000"; // 1 ether
@@ -24,135 +27,184 @@ let [Verifier, PrivateTransfer]: ContractFactory[] = [];
 let [verifier, privateTransfer]: Contract[] = [];
 let signers: SignerWithAddress[];
 let commitments: string[] = [];
-let root = "";
+let tree: MerkleTree;
+let root: Buffer;
 let barretenberg: BarretenbergWasm;
+
+let to_pubkey_x: Buffer;
+let to_pubkey_y: Buffer;
+let receiver_note_commitment: Buffer;
+let sender_priv_key: Buffer;
+let sender_pubkey_x;
+let sender_pubkey_y;
+let nullifier: Buffer;
+let note_commitment: Buffer;
 
 before(async () => {
   PrivateTransfer = await ethers.getContractFactory("PrivateTransfer");
   Verifier = await ethers.getContractFactory("TurboVerifier");
   signers = await ethers.getSigners();
   barretenberg = await BarretenbergWasm.new();
+  await barretenberg.init()
 
   let pedersen = new SinglePedersen(barretenberg);
+  let schnorr = new Schnorr(barretenberg);
+  const db = levelup(memdown());
+  // tree = await MerkleTree.new(db, pedersen, 'test', 3);
+  tree = new MerkleTree(3, barretenberg);
+  // let proofBeforeInsert = tree.proof(0);
+  // console.dir(proofBeforeInsert.pathElements);
 
-  // TODO: move this to its own MerkleTree test
-  const tree = new MerkleTree(3, barretenberg);
-  tree.insert("2ab135000c911caaf6fcc25eeeace4ea8be41f3531b2596c0c1a7ac22eb11b57");
-  let merkleProof = tree.proof(0);
-  console.dir(merkleProof.pathElements);
-  console.log('root: ', tree.root());
-  let b = Buffer.from("2ab135000c911caaf6fcc25eeeace4ea8be41f3531b2596c0c1a7ac22eb11b57", "hex");
-  let c = Buffer.from("1cdcf02431ba623767fe389337d011df1048dcc24b98ed81cec97627bab454a0", "hex");
-  let e00 = pedersen.compress(b, c);
-  console.log('e00: ', e00.toString('hex'));
-  let d = Buffer.from("0833de91a69b13953edec6be92977bad49f0dbac520ec8f63d723f7692a446b8", "hex");
-  let e01 = pedersen.compress(e00, d);
-  console.log('e01: ', e01.toString('hex'));
-  let e = Buffer.from("0bf4c916dd193a7ac4748d91063d7244214d70cb2e338eb2cfff1fa4b5f1633d", "hex");
-  let e02 = pedersen.compress(e01, e);
-  console.log('e01: ', e02.toString('hex'));
-
-  let x = Buffer.from("0000000000000000000000000000000000000000000000000000000000000001", "hex");
-  let y = Buffer.from("0000000000000000000000000000000000000000000000000000000000000001", "hex");
-
-  console.log('y: ', y);
-  let hashRes = pedersen.compressInputs([x]);
-
-  let hashRes2 = pedersen.compress(x, y);
-  console.log('pedersen res: ', hashRes.toString('hex'));
-  console.log('pedersen res bytes: ', hashRes);
-  console.log('pedersen res 2: ', hashRes2.toString('hex'));
-  console.log('pedersen res 2 bytes: ', hashRes2);
-});
-
-beforeEach(async function () {
-  root = "0x1221a375f6b4305e493497805102054f2847790244f92d09f6e859c083be2627";
-  let commitment = "0x2ab135000c911caaf6fcc25eeeace4ea8be41f3531b2596c0c1a7ac22eb11b57";
-  commitments.push(commitment);
-  verifier = await Verifier.deploy();
-  privateTransfer = await PrivateTransfer.deploy(verifier.address, amount, root, commitments, { value: utils.parseEther("1.0") } );
-});
+  sender_priv_key = Buffer.from("000000000000000000000000000000000000000000000000000000616c696365", "hex");
+  let sender_public_key = schnorr.computePublicKey(sender_priv_key);
+  sender_pubkey_x = sender_public_key.subarray(0, 32);
+  sender_pubkey_y = sender_public_key.subarray(32)
+  console.log('from public key x: ' + sender_pubkey_x.toString('hex') + 'from pubkey y: ' + sender_pubkey_y.toString('hex'));
   
+  note_commitment = pedersen.compressInputs([sender_pubkey_x, sender_pubkey_y]);
+  console.log('note_commitment: ' + note_commitment.toString('hex'));
+  console.log('note_commitment size: ' + note_commitment.length + ' note commit: ' + note_commitment.toString('hex'));
+
+  let to_priv_key = Buffer.from("0000000000000000000000000000000000000000000000000000000000000001", "hex");
+  let to_public_key = schnorr.computePublicKey(to_priv_key);
+  to_pubkey_x = to_public_key.subarray(0, 32);
+  to_pubkey_y = to_public_key.subarray(32)
+  console.log('to public key x: ' + to_pubkey_x.toString('hex')  + '\nto pubkey y: ' + to_pubkey_y.toString('hex'));
+
+  receiver_note_commitment = pedersen.compressInputs([to_pubkey_x, to_pubkey_y]);
+  console.log('receiver_note_commitment: ' + receiver_note_commitment.toString('hex'));
+
+  let index_buffer = Buffer.from('0000000000000000000000000000000000000000000000000000000000000000', 'hex');
+  nullifier = pedersen.compressInputs([note_commitment, index_buffer, sender_priv_key]);
+  console.log('nullifier: ' + nullifier.toString('hex'));
+});
+
+// beforeEach(async function () {
+//   root = "0x1221a375f6b4305e493497805102054f2847790244f92d09f6e859c083be2627";
+//   let commitment = "0x2ab135000c911caaf6fcc25eeeace4ea8be41f3531b2596c0c1a7ac22eb11b57";
+//   commitments.push(commitment);
+//   verifier = await Verifier.deploy();
+//   privateTransfer = await PrivateTransfer.deploy(verifier.address, amount, `0x` + root, commitments, { value: utils.parseEther("1.0") } );
+// });
+
 describe("mixer withdraw", () => {
-  it("should work", async () => {
-    const privateTransactionAmount = utils.parseEther("1.0");
+  it("Simple shield works for merkle tree insert, compiled using noir wasm", async () => {
+    let compiled_program = compile(path.resolve(__dirname, '../circuits/src/main.nr'));
+    let acir = compiled_program.circuit;
+
+    console.log('original root: ', tree.root());
+    tree.insert(note_commitment.toString('hex'));
+    let merkleProof = tree.proof(0);
+    let note_hash_path = merkleProof.pathElements
+    console.dir(note_hash_path);
+    let note_root = tree.root();
+    console.log('new root: ', note_root);
+
+    let abi = {
+      priv_key: `0x` + sender_priv_key.toString('hex'),
+      note_root: `0x` + note_root, 
+      index: 0,
+      note_hash_path: [
+        `0x` + note_hash_path[0],
+        `0x` + note_hash_path[1],
+        `0x` + note_hash_path[2],
+      ],
+      to_pubkey_x: `0x` + to_pubkey_x.toString('hex'),
+      to_pubkey_y: `0x` + to_pubkey_y.toString('hex'),
+      return: [
+        `0x` + nullifier.toString('hex'),
+        `0x` + receiver_note_commitment.toString('hex')
+      ]
+    };
+
+    let [prover, verifier] = await setup_generic_prover_and_verifier(acir);
     
-    let proverToml = await readFileSync(path.resolve(__dirname,`../circuits/Prover.toml`));
-    var proverInputs = toml.parse(proverToml.toString());
-    console.log('proof location ' + path.resolve(__dirname,`../circuits/proofs/p.proof`));
-    // NOTE: this reads from the proof generated by nargo prove, and buffer doesn't give accurate binary data on its own needs to be converted
-    // proof is not pre-pended with public inputs, unlike in Noir/barretenberg don't need to prepend for generated Sol verifier
-    let proofBuffer = await readFileSync(path.resolve(__dirname,`../circuits/proofs/p.proof`));
-    console.log('proofBuffer: ', proofBuffer);
+    const proof = await create_proof(prover, acir, abi);
 
-    let proofBytes = hexToBytes(proofBuffer.toString());
-    // console.log('proofBuffer: ', proofBuffer.toString());
+    const verified = await verify_proof(verifier, proof);
 
-    // generate withdraw input (nullifier, commitment, etc)
-    let commitment = "0x2ab135000c911caaf6fcc25eeeace4ea8be41f3531b2596c0c1a7ac22eb11b57";
-    let nullifierHash = proverInputs.return[0];
-    let receiver_note_commitment = proverInputs.return[1];
-    let root = proverInputs.note_root;
-    let recipient = signers[1].address;
-
-    let mergedRawPubInputs = hexListToBytes([root, nullifierHash, receiver_note_commitment]);
-
-    let pubInputsByteArray = [...mergedRawPubInputs];
-
-    let args = [[...proofBytes], pubInputsByteArray, root, commitment, nullifierHash, recipient];
-
-    // verify proof and perform withdraw
-    // NOTE: curently being done by nargo and fetched from circuits folder rather than running wasm file
-    const before = await provider.getBalance(recipient);
-    await privateTransfer.withdraw(...args);
-    // Simply calling verify method for the TurboVerifier
-    // await callTurboVerifier([...proofBytes], pubInputsByteArray)
-    const after = await provider.getBalance(recipient);
-    // check results
-    expect(after.sub(before)).to.equal(privateTransactionAmount);
+    expect(verified).eq(true)
   });
 
-  it("noir wasm should work", async () => {
-    const privateTransactionAmount = utils.parseEther("1.0");
-    
-    let path = "../circuits/src/main.nr";
-    // let path = "/Users/maximvezenov/Documents/dev/noir-projects/simple_shield/circuits/src/main.nr";
-    const compiled_program = compile(path);
-    const acir = compiled_program.acir;
-    const abi = compiled_program.abi;
+  it("Simple shield works for merkle tree insert, compiled using nargo", async () => {
+    let acirByteArray = path_to_uint8array(path.resolve(__dirname, '../circuits/build/p.acir'));
+    let acir = acir_from_bytes(acirByteArray);
 
-    console.log('abi: ' + abi);
+    // NOTE: no need to re-insert and fetch a new proof as we are just testing using the fetched ACIR from file
+    // the root and hash path are still stored from the previous test
+    let merkleProof = tree.proof(0);
+    let note_hash_path = merkleProof.pathElements
+    let note_root = tree.root();
+    console.dir(note_hash_path)
+
+    let abi = {
+      priv_key: `0x` + sender_priv_key.toString('hex'),
+      note_root: `0x` + note_root, 
+      index: 0,
+      note_hash_path: [
+        `0x` + note_hash_path[0],
+        `0x` + note_hash_path[1],
+        `0x` + note_hash_path[2],
+      ],
+      to_pubkey_x: `0x` + to_pubkey_x.toString('hex'),
+      to_pubkey_y: `0x` + to_pubkey_y.toString('hex'),
+      return: [
+        `0x` + nullifier.toString('hex'),
+        `0x` + receiver_note_commitment.toString('hex')
+      ]
+    };
+
+    let [prover, verifier] = await setup_generic_prover_and_verifier(acir);
+    
+    const proof = await create_proof(prover, acir, abi);
+
+    const verified = await verify_proof(verifier, proof);
+
+    expect(verified).eq(true)
+  });
+
+  it("Simple shield should work on 2nd merkle tree insert", async () => {
+    let compiled_program = compile(path.resolve(__dirname, '../circuits/src/main.nr'));
+    let acir = compiled_program.circuit;
+
+    console.log('original root: ', tree.root());
+    tree.insert(note_commitment.toString('hex'));
+    let merkleProof = tree.proof(1);
+    let note_hash_path = merkleProof.pathElements
+    console.dir(note_hash_path);
+    let note_root = tree.root();
+    console.log('new root: ', note_root);
+
+    let abi = {
+      priv_key: `0x` + sender_priv_key.toString('hex'),
+      note_root: `0x` + note_root, 
+      index: 0,
+      note_hash_path: [
+        `0x` + note_hash_path[0],
+        `0x` + note_hash_path[1],
+        `0x` + note_hash_path[2],
+      ],
+      to_pubkey_x: `0x` + to_pubkey_x.toString('hex'),
+      to_pubkey_y: `0x` + to_pubkey_y.toString('hex'),
+      return: [
+        `0x` + nullifier.toString('hex'),
+        `0x` + receiver_note_commitment.toString('hex')
+      ]
+    };
+
+    let [prover, verifier] = await setup_generic_prover_and_verifier(acir);
+    
+    const proof = await create_proof(prover, acir, abi);
+
+    const verified = await verify_proof(verifier, proof);
+
+    expect(verified).eq(true)
   });
 });
 
-
-// Convert a hex string to a byte array
-function hexToBytes(hex: string) {
-  for (var bytes = [], c = 0; c < hex.length; c += 2)
-      bytes.push(parseInt(hex.substr(c, 2), 16));
-  return bytes;
-}
-
-function hexListToBytes(list: string[]) {
-  let rawPubInputs = [];
-  for (let i = 0; i < list.length; i++) {
-    let rawPubInput = utils.arrayify(list[i]);
-    rawPubInputs.push(rawPubInput)
-  }
-  // Get the total length of all arrays.
-  let length = 0;
-  rawPubInputs.forEach(item => {
-    length += item.length;
-  });
-
-  // Create a new array with total length and merge all source arrays.
-  let mergedRawPubInputs = new Uint8Array(length);
-  let offset = 0;
-  rawPubInputs.forEach(item => {
-    mergedRawPubInputs.set(item, offset);
-    offset += item.length;
-  });
-  return mergedRawPubInputs
+function path_to_uint8array(path: string) {
+  let buffer = readFileSync(path);
+  return new Uint8Array(buffer);
 }
 
 async function callTurboVerifier(proof: number[], pub_inputs: number[]) {
