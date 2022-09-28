@@ -152,46 +152,6 @@
         "TurboVerifier",
         "Types"
       ]
-    },
-    "/mnt/user-data/maxim/simple_shield/contracts/OriginalSimpleShield_vk.sol": {
-      "lastModificationDate": 1664335464320,
-      "contentHash": "c2a4b1f6a24156a6dd545eeeffc72ce7",
-      "sourceName": "contracts/OriginalSimpleShield_vk.sol",
-      "solcConfig": {
-        "version": "0.8.10",
-        "settings": {
-          "evmVersion": "london",
-          "optimizer": {
-            "enabled": true,
-            "runs": 5000
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        ">=0.6.0"
-      ],
-      "artifacts": [
-        "Bn254Crypto",
-        "PolynomialEval",
-        "SimpleShieldVerifier",
-        "Transcript",
-        "Types"
-      ]
     }
   }
 }

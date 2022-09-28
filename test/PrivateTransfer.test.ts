@@ -45,10 +45,6 @@ interface Transfer {
 }
 let transfers: Transfer[] = [];
 
-// let to_pubkey_x: Buffer;
-// let to_pubkey_y: Buffer;
-// let receiver_note_commitment: Buffer;
-
 function generateTestTransfers(num_transfers: number, schnorr: Schnorr) {
   let transfers = [];
   for (var i = 0; i < num_transfers; i++) {
@@ -56,10 +52,9 @@ function generateTestTransfers(num_transfers: number, schnorr: Schnorr) {
     let sender_public_key = schnorr.computePublicKey(sender_priv_key);
     sender_pubkey_x = sender_public_key.subarray(0, 32);
     sender_pubkey_y = sender_public_key.subarray(32)
-    console.log('from public key x: ' + sender_pubkey_x.toString('hex') + 'from pubkey y: ' + sender_pubkey_y.toString('hex'));
+    console.log('sender public key x: ' + sender_pubkey_x.toString('hex') + '\sender pubkey y: ' + sender_pubkey_y.toString('hex'));
     
     const secret = randomBytes(32)
-    console.log('Random Buffer: ', secret.toString('hex'));
     note_commitment = pedersen.compressInputs([sender_pubkey_x, sender_pubkey_y, secret]);
     console.log('note_commitment: ' + note_commitment.toString('hex'));
 
@@ -86,9 +81,7 @@ before(async () => {
   tree = new MerkleTree(3, barretenberg);
   
   let test_transfers = generateTestTransfers(2, schnorr);
-  console.dir(test_transfers);
   transfers.push(...test_transfers);
-  console.dir(transfers);
 
   tree.insert(transfers[0].note_commitment.toString('hex'));
   tree.insert(transfers[1].note_commitment.toString('hex'));
@@ -116,15 +109,26 @@ describe("Noir circuit verifies succesfully using Typescript", () => {
       secret: `0x` + transfers[0].secret.toString('hex'),
       return: `0x` + transfers[0].nullifier.toString('hex'),
     };
-    console.dir(abi);
     
     let [prover, verifier] = await setup_generic_prover_and_verifier(acir);
     
-    const proof = await create_proof(prover, acir, abi);
+    const proof: Buffer = await create_proof(prover, acir, abi);
 
     const verified = await verify_proof(verifier, proof);
 
-    expect(verified).eq(true)
+    expect(verified).eq(true);
+
+    // Attempt to alter recipient should fail verification
+    const fake_recipient = Buffer.from(serialise_public_inputs([signers[19].address]));
+    proof.fill(fake_recipient, 0, 32);
+    const bad_recipient_verified = await verify_proof(verifier, proof);
+    expect(bad_recipient_verified).eq(false);
+
+    // Attempt to alter nullifier should fail verification
+    const fake_nullifer = randomBytes(32);
+    proof.fill(fake_nullifer, 64, 96);
+    const bad_nullifier_verified = await verify_proof(verifier, proof);
+    expect(bad_nullifier_verified).eq(false);
   });
 
   it("Simple shield works for merkle tree insert, compiled using nargo", async () => {
@@ -133,7 +137,7 @@ describe("Noir circuit verifies succesfully using Typescript", () => {
 
     let merkleProof = tree.proof(0);
     let note_hash_path = merkleProof.pathElements;
-
+    
     let abi = {
       recipient: recipient,
       priv_key: `0x` + sender_priv_key.toString('hex'),
@@ -147,7 +151,6 @@ describe("Noir circuit verifies succesfully using Typescript", () => {
       secret: `0x` + transfers[0].secret.toString('hex'),
       return: `0x` + transfers[0].nullifier.toString('hex'),
     };
-    console.dir(abi);
 
     let [prover, verifier] = await setup_generic_prover_and_verifier(acir);
     
@@ -166,7 +169,6 @@ describe("Noir circuit verifies succesfully using Typescript", () => {
     let note_hash_path = merkleProof.pathElements
 
     nullifier = pedersen.compressInputs([note_commitment, Buffer.from(toFixedHex(1, false), 'hex'), sender_priv_key]);
-    console.log('nullifier: ' + nullifier.toString('hex'));
 
     let abi = {
       recipient: recipient,
@@ -181,7 +183,6 @@ describe("Noir circuit verifies succesfully using Typescript", () => {
       secret: `0x` + transfers[1].secret.toString('hex'),
       return: `0x` + transfers[1].nullifier.toString('hex'),
     };
-    console.dir(abi);
 
     let [prover, verifier] = await setup_generic_prover_and_verifier(acir);
     
@@ -214,12 +215,8 @@ describe("Prviate Transfer works with Solidity verifier", () => {
     let acir = compiled_program.circuit;
 
     let merkleProof = tree.proof(0);
-    let note_hash_path = merkleProof.pathElements
-
-    nullifier = pedersen.compressInputs([note_commitment, Buffer.from(toFixedHex(0, false), 'hex'), sender_priv_key]);
-    let nullifierString = `0x` + nullifier.toString('hex');
-    console.log('nullifier: ', nullifierString);
-
+    let note_hash_path = merkleProof.pathElements;
+    let nullifierHexString = `0x` + transfers[0].nullifier.toString('hex');
     let abi = {
       recipient: recipient,
       priv_key: `0x` + sender_priv_key.toString('hex'),
@@ -231,22 +228,19 @@ describe("Prviate Transfer works with Solidity verifier", () => {
         `0x` + note_hash_path[2],
       ],
       secret: `0x` + transfers[0].secret.toString('hex'),
-      return: `0x` + transfers[0].nullifier.toString('hex'),
+      return: nullifierHexString,
     };
-    console.dir(abi)
 
     let [prover, verifier] = await setup_generic_prover_and_verifier(acir);
-    console.log('created prover and verifier');
 
     const proof = await create_proof(prover, acir, abi);
-    console.log('proof: ', proof.toString('hex'));
 
     const verified = await verify_proof(verifier, proof);
-    console.log('verified: ', verified);
+    expect(verified).eq(true);
 
     const before = await provider.getBalance(recipient);
 
-    let args = [`0x` + proof.toString('hex'), `0x` + note_root, commitments[0], nullifierString, recipient];
+    let args = [`0x` + proof.toString('hex'), `0x` + note_root, commitments[0], nullifierHexString, recipient];
     await privateTransfer.withdraw(...args);
 
     const after = await provider.getBalance(recipient);
@@ -262,8 +256,7 @@ describe("Prviate Transfer works with Solidity verifier", () => {
     let note_hash_path = merkleProof.pathElements;
 
     nullifier = pedersen.compressInputs([note_commitment, Buffer.from(toFixedHex(1, false), 'hex'), sender_priv_key]);
-    let nullifierString = `0x` + nullifier.toString('hex');
-    console.log('nullifier: ', nullifierString);
+    let nullifierHexString = `0x` + transfers[1].nullifier.toString('hex');
     note_root = tree.root();
 
     let abi = {
@@ -277,21 +270,19 @@ describe("Prviate Transfer works with Solidity verifier", () => {
         `0x` + note_hash_path[2],
       ],
       secret: `0x` + transfers[1].secret.toString('hex'),
-      return: `0x` + transfers[1].nullifier.toString('hex'),
+      return: nullifierHexString,
     };
 
     let [prover, verifier] = await setup_generic_prover_and_verifier(acir);
-    console.log('created prover and verifier');
 
     const proof = await create_proof(prover, acir, abi);
-    console.log('proof: ', proof.toString('hex'));
 
     const verified = await verify_proof(verifier, proof);
-    console.log('verified: ', verified);
+    expect(verified).eq(true);
 
     const before = await provider.getBalance(signers[2].address);
 
-    let args = [`0x` + proof.toString('hex'), `0x` + note_root, commitments[1], nullifierString, signers[2].address];
+    let args = [`0x` + proof.toString('hex'), `0x` + note_root, commitments[1], nullifierHexString, signers[2].address];
     await privateTransfer.withdraw(...args);
 
     const after = await provider.getBalance(signers[2].address);
