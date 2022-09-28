@@ -1,94 +1,17 @@
 {
   "_format": "hh-sol-cache-2",
   "files": {
-    "/Users/maximvezenov/Documents/dev/noir-projects/simple_shield/contracts/plonk_vk.sol": {
-      "lastModificationDate": 1659054501449,
-      "contentHash": "3c76f95eabede5e4c6ed19f2f01e7a32",
-      "sourceName": "contracts/plonk_vk.sol",
-      "solcConfig": {
-        "version": "0.6.10",
-        "settings": {
-          "evmVersion": "istanbul",
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [
-        "hardhat/console.sol"
-      ],
-      "versionPragmas": [
-        ">=0.6.0 <0.8.0"
-      ],
-      "artifacts": [
-        "Bn254Crypto",
-        "PolynomialEval",
-        "TranscriptLibrary",
-        "TurboPlonk",
-        "TurboVerifier",
-        "Types"
-      ]
-    },
-    "/Users/maximvezenov/Documents/dev/noir-projects/simple_shield/node_modules/hardhat/console.sol": {
-      "lastModificationDate": 1658867045852,
-      "contentHash": "cc4777addd464ea56fa35b1c45df0591",
-      "sourceName": "hardhat/console.sol",
-      "solcConfig": {
-        "version": "0.8.0",
-        "settings": {
-          "optimizer": {
-            "enabled": false,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        ">=0.4.22 <0.9.0"
-      ],
-      "artifacts": [
-        "console"
-      ]
-    },
-    "/Users/maximvezenov/Documents/dev/noir-projects/simple_shield/contracts/PrivateTransfer.sol": {
-      "lastModificationDate": 1659368673135,
-      "contentHash": "d90527f338a9e6180c804c0472825777",
+    "/mnt/user-data/maxim/simple_shield/contracts/PrivateTransfer.sol": {
+      "lastModificationDate": 1664381428691,
+      "contentHash": "9204cfc7ba5603b128da2df41a9cec75",
       "sourceName": "contracts/PrivateTransfer.sol",
       "solcConfig": {
-        "version": "0.8.0",
+        "version": "0.8.10",
         "settings": {
+          "evmVersion": "london",
           "optimizer": {
-            "enabled": false,
-            "runs": 200
+            "enabled": true,
+            "runs": 5000
           },
           "outputSelection": {
             "*": {
@@ -111,23 +34,60 @@
         "hardhat/console.sol"
       ],
       "versionPragmas": [
-        ">=0.6.0 <0.8.1"
+        ">=0.6.0"
       ],
       "artifacts": [
         "IVerifier",
         "PrivateTransfer"
       ]
     },
-    "/Users/maximvezenov/Documents/dev/noir-projects/simple_shield/node_modules/@openzeppelin/contracts/security/ReentrancyGuard.sol": {
-      "lastModificationDate": 1658871498651,
+    "/mnt/user-data/maxim/simple_shield/node_modules/hardhat/console.sol": {
+      "lastModificationDate": 1664248988001,
+      "contentHash": "4ff3cd2f6272c9a6516e9ee4f2b967d3",
+      "sourceName": "hardhat/console.sol",
+      "solcConfig": {
+        "version": "0.8.10",
+        "settings": {
+          "evmVersion": "london",
+          "optimizer": {
+            "enabled": true,
+            "runs": 5000
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">= 0.4.22 <0.9.0"
+      ],
+      "artifacts": [
+        "console"
+      ]
+    },
+    "/mnt/user-data/maxim/simple_shield/node_modules/@openzeppelin/contracts/security/ReentrancyGuard.sol": {
+      "lastModificationDate": 1664248989069,
       "contentHash": "92f9448b23a90ea3bb932ee55cc3ccce",
       "sourceName": "@openzeppelin/contracts/security/ReentrancyGuard.sol",
       "solcConfig": {
-        "version": "0.8.0",
+        "version": "0.8.10",
         "settings": {
+          "evmVersion": "london",
           "optimizer": {
-            "enabled": false,
-            "runs": 200
+            "enabled": true,
+            "runs": 5000
           },
           "outputSelection": {
             "*": {
@@ -151,6 +111,46 @@
       ],
       "artifacts": [
         "ReentrancyGuard"
+      ]
+    },
+    "/mnt/user-data/maxim/simple_shield/contracts/plonk_vk.sol": {
+      "lastModificationDate": 1664392815590,
+      "contentHash": "e9c17b7c398539068197ba067375d808",
+      "sourceName": "contracts/plonk_vk.sol",
+      "solcConfig": {
+        "version": "0.8.10",
+        "settings": {
+          "evmVersion": "london",
+          "optimizer": {
+            "enabled": true,
+            "runs": 5000
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.6.0"
+      ],
+      "artifacts": [
+        "Bn254Crypto",
+        "PolynomialEval",
+        "Transcript",
+        "TurboVerifier",
+        "Types"
       ]
     }
   }
