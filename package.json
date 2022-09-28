@@ -48,9 +48,6 @@
     "@noir-lang/noir_wasm": "^0.10.0",
     "@openzeppelin/contracts": "^4.7.1",
     "@typechain/ethers-v5": "^10.1.0",
-    "bigint-buffer": "^1.1.5",
-    "levelup": "^5.1.1",
-    "memdown": "^6.1.1",
-    "toml": "^3.0.0"
+    "bigint-buffer": "^1.1.5"
   }
 }

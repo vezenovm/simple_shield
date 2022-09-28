@@ -1,19 +1,14 @@
 import { ethers } from "hardhat";
-import levelup from 'levelup';
-import memdown from 'memdown';
 const { provider } = ethers;
+
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber, Contract, ContractFactory, utils } from "ethers";
 import { expect } from "chai";
 import { readFileSync } from 'fs';
 import path from 'path';
 import { randomBytes } from 'crypto'
-import toml from 'toml';
-// import { Pedersen, PooledPedersen, SinglePedersen } from '@aztec/barretenberg/crypto/pedersen';
-// import { BarretenbergWasm, WorkerPool } from '@aztec/barretenberg/wasm';
-// import { toBufferBE } from 'bigint-buffer';
-import { compile, acir_from_bytes, acir_to_bytes } from '@noir-lang/noir_wasm';
-import { setup_generic_prover_and_verifier, create_proof, verify_proof, create_proof_with_witness } from '@noir-lang/barretenberg/dest/client_proofs';
+import { compile, acir_from_bytes } from '@noir-lang/noir_wasm';
+import { setup_generic_prover_and_verifier, create_proof, verify_proof } from '@noir-lang/barretenberg/dest/client_proofs';
 import { BarretenbergWasm } from '@noir-lang/barretenberg/dest/wasm';
 import { SinglePedersen } from '@noir-lang/barretenberg/dest/crypto/pedersen';
 import { Schnorr } from '@noir-lang/barretenberg/dest/crypto/schnorr';
