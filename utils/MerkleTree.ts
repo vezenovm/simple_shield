@@ -1,29 +1,11 @@
-// const circomlib = require("circomlib");
-// import { mimcsponge } from "circomlibjs";
-// const circomlibjs = require('circomlibjs');
 // import { Pedersen, SinglePedersen } from '@aztec/barretenberg/crypto/pedersen';
 // import { BarretenbergWasm } from '@aztec/barretenberg/wasm';
 import { SinglePedersen } from '@noir-lang/barretenberg/dest/crypto/pedersen';
 import { BarretenbergWasm } from '@noir-lang/barretenberg/dest/wasm';
-// @ts-ignore
-const circomlibjs = require('circomlibjs');
 
-const mimcsponge = circomlibjs.mimcsponge;
-// import { pedersenHashConcat } from "zkp-merkle-airdrop-lib"
-
-export function MiMCSponge(left: string, right: string): string {
-  return mimcsponge.multiHash([BigInt(left), BigInt(right)]).toString();
-}
-
-/** Compute pedersen hash */
-export function pedersenHash(data: any[]): string {
-  console.log(circomlibjs.pedersenHash);
-  // let hash = circomlibjs.pedersenHash.hash(data);
-  // return circomlibjs.babyJub.unpackPoint(hash)[0].toString();
-  let hash = mimcsponge.multiHash(data);
-  console.log(hash);
-  return hash.toString();
-}
+// export function MiMCSponge(left: string, right: string): string {
+//   return mimcsponge.multiHash([BigInt(left), BigInt(right)]).toString();
+// }
 
 export function pedersenLeftRight(
   barretenberg: BarretenbergWasm, 

@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.6.0 <0.8.1;
+pragma solidity >=0.6.0;
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "hardhat/console.sol";
 
 interface IVerifier {
-    function verify(bytes calldata, bytes calldata) external view returns (bool);
+    function verify(bytes calldata) external view returns (bool);
 }
 
 contract PrivateTransfer is ReentrancyGuard {
@@ -44,19 +44,22 @@ contract PrivateTransfer is ReentrancyGuard {
 
     function withdraw(
         bytes calldata proof,
-        bytes calldata public_inputs,
         bytes32 _root,
         uint256 _commitment,
         bytes32 _nullifierHash,
         address payable _recipient
     ) external payable nonReentrant {
         require(!nullifierHashes[_nullifierHash], "The note has been already spent");
-
         require(root == _root, "Cannot find your merkle root");
-
         require(commitments[_commitment], "Commitment is not found in the set!");
- 
-        bool proofResult = verifier.verify(proof, public_inputs);
+        
+        uint256 recipient;
+        assembly {
+                recipient := calldataload(add(calldataload(0x04), 0x24))
+        } 
+        require(recipient == uint256(uint160(address(_recipient))), "The same recipient was not provided to the proof");
+
+        bool proofResult = verifier.verify(proof);
         require(proofResult, "Invalid withdraw proof");
 
         // Set nullifier hash to true

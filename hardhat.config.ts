@@ -3,19 +3,11 @@ import "@nomicfoundation/hardhat-toolbox";
 
 const config: HardhatUserConfig = {
   solidity: {
-    compilers: [
-        // verifier contract would get stack too deep error unless 0.6.10 and settings are specified
-        {
-            version: "0.6.10",
-            settings: {
-              evmVersion: 'istanbul',
-              optimizer: { enabled: true, runs: 200 },
-            },
-        },
-        {
-            version: "0.8.0"
-        }
-    ]
+    version: '0.8.10',
+    settings: {
+      evmVersion: 'london',
+      optimizer: { enabled: true, runs: 5000 },
+    },
   },
   networks: {
     hardhat: {
