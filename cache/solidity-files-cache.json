@@ -2,7 +2,7 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "/mnt/user-data/maxim/simple_shield/contracts/PrivateTransfer.sol": {
-      "lastModificationDate": 1664381428691,
+      "lastModificationDate": 1664396434184,
       "contentHash": "9204cfc7ba5603b128da2df41a9cec75",
       "sourceName": "contracts/PrivateTransfer.sol",
       "solcConfig": {
@@ -114,7 +114,7 @@
       ]
     },
     "/mnt/user-data/maxim/simple_shield/contracts/plonk_vk.sol": {
-      "lastModificationDate": 1664392815590,
+      "lastModificationDate": 1664396307131,
       "contentHash": "e9c17b7c398539068197ba067375d808",
       "sourceName": "contracts/plonk_vk.sol",
       "solcConfig": {
