@@ -102,7 +102,7 @@ describe("Noir circuit verifies succesfully using Typescript", () => {
         `0x` + note_hash_path[2],
       ],
       secret: `0x` + transfers[0].secret.toString('hex'),
-      return: `0x` + transfers[0].nullifier.toString('hex'),
+      return: [`0x` + transfers[0].nullifier.toString('hex'), recipient]
     };
     
     let [prover, verifier] = await setup_generic_prover_and_verifier(acir);
@@ -110,18 +110,18 @@ describe("Noir circuit verifies succesfully using Typescript", () => {
     const proof: Buffer = await create_proof(prover, acir, abi);
 
     const verified = await verify_proof(verifier, proof);
-
+    console.log('verified: ', verified)
     expect(verified).eq(true);
 
     // Attempt to alter recipient should fail verification
     const fake_recipient = Buffer.from(serialise_public_inputs([signers[19].address]));
-    proof.fill(fake_recipient, 0, 32);
+    proof.fill(fake_recipient, 64, 96);
     const bad_recipient_verified = await verify_proof(verifier, proof);
     expect(bad_recipient_verified).eq(false);
 
     // Attempt to alter nullifier should fail verification
     const fake_nullifer = randomBytes(32);
-    proof.fill(fake_nullifer, 64, 96);
+    proof.fill(fake_nullifer, 32, 64);
     const bad_nullifier_verified = await verify_proof(verifier, proof);
     expect(bad_nullifier_verified).eq(false);
   });
@@ -144,7 +144,7 @@ describe("Noir circuit verifies succesfully using Typescript", () => {
         `0x` + note_hash_path[2],
       ],
       secret: `0x` + transfers[0].secret.toString('hex'),
-      return: `0x` + transfers[0].nullifier.toString('hex'),
+      return: [`0x` + transfers[0].nullifier.toString('hex'), recipient],
     };
 
     let [prover, verifier] = await setup_generic_prover_and_verifier(acir);
@@ -176,7 +176,7 @@ describe("Noir circuit verifies succesfully using Typescript", () => {
         `0x` + note_hash_path[2],
       ],
       secret: `0x` + transfers[1].secret.toString('hex'),
-      return: `0x` + transfers[1].nullifier.toString('hex'),
+      return: [`0x` + transfers[1].nullifier.toString('hex'), recipient]
     };
 
     let [prover, verifier] = await setup_generic_prover_and_verifier(acir);
@@ -212,6 +212,7 @@ describe("Prviate Transfer works with Solidity verifier", () => {
     let merkleProof = tree.proof(0);
     let note_hash_path = merkleProof.pathElements;
     let nullifierHexString = `0x` + transfers[0].nullifier.toString('hex');
+
     let abi = {
       recipient: recipient,
       priv_key: `0x` + sender_priv_key.toString('hex'),
@@ -223,7 +224,7 @@ describe("Prviate Transfer works with Solidity verifier", () => {
         `0x` + note_hash_path[2],
       ],
       secret: `0x` + transfers[0].secret.toString('hex'),
-      return: nullifierHexString,
+      return: [nullifierHexString, recipient],
     };
 
     let [prover, verifier] = await setup_generic_prover_and_verifier(acir);
@@ -233,9 +234,16 @@ describe("Prviate Transfer works with Solidity verifier", () => {
     const verified = await verify_proof(verifier, proof);
     expect(verified).eq(true);
 
+    // Attempt to alter recipient should fail verification
+    const fake_recipient = Buffer.from(serialise_public_inputs([signers[19].address]));
+    let fake_proof: Buffer = Buffer.from(proof);
+    fake_proof.fill(fake_recipient, 64, 96);
+    let args = [`0x` + fake_proof.toString('hex'), `0x` + note_root, commitments[0]];
+    await expect(privateTransfer.withdraw(...args)).to.be.revertedWith('Proof failed');
+
     const before = await provider.getBalance(recipient);
 
-    let args = [`0x` + proof.toString('hex'), `0x` + note_root, commitments[0], nullifierHexString, recipient];
+    args = [`0x` + proof.toString('hex'), `0x` + note_root, commitments[0]];
     await privateTransfer.withdraw(...args);
 
     const after = await provider.getBalance(recipient);
@@ -252,7 +260,6 @@ describe("Prviate Transfer works with Solidity verifier", () => {
 
     nullifier = pedersen.compressInputs([note_commitment, Buffer.from(toFixedHex(1, false), 'hex'), sender_priv_key]);
     let nullifierHexString = `0x` + transfers[1].nullifier.toString('hex');
-    note_root = tree.root();
 
     let abi = {
       recipient: signers[2].address,
@@ -265,9 +272,9 @@ describe("Prviate Transfer works with Solidity verifier", () => {
         `0x` + note_hash_path[2],
       ],
       secret: `0x` + transfers[1].secret.toString('hex'),
-      return: nullifierHexString,
+      return: [nullifierHexString, signers[2].address]
     };
-
+    
     let [prover, verifier] = await setup_generic_prover_and_verifier(acir);
 
     const proof = await create_proof(prover, acir, abi);
@@ -275,9 +282,12 @@ describe("Prviate Transfer works with Solidity verifier", () => {
     const verified = await verify_proof(verifier, proof);
     expect(verified).eq(true);
 
+    const sc_verified = await verifierContract.verify(proof);
+    expect(sc_verified).eq(true);
+
     const before = await provider.getBalance(signers[2].address);
 
-    let args = [`0x` + proof.toString('hex'), `0x` + note_root, commitments[1], nullifierHexString, signers[2].address];
+    let args = [`0x` + proof.toString('hex'), `0x` + note_root, commitments[1]];
     await privateTransfer.withdraw(...args);
 
     const after = await provider.getBalance(signers[2].address);

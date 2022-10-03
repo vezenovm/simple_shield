@@ -45,20 +45,20 @@ contract PrivateTransfer is ReentrancyGuard {
     function withdraw(
         bytes calldata proof,
         bytes32 _root,
-        uint256 _commitment,
-        bytes32 _nullifierHash,
-        address payable _recipient
+        uint256 _commitment
     ) external payable nonReentrant {
+        uint256 recipient;
+        bytes32 _nullifierHash;
+        assembly {
+                _nullifierHash := calldataload(add(calldataload(0x04), 0x44))
+                recipient := calldataload(add(calldataload(0x04), 0x64))
+        } 
+        address payable _recipient = payable(address(uint160(recipient)));
+
         require(!nullifierHashes[_nullifierHash], "The note has been already spent");
         require(root == _root, "Cannot find your merkle root");
         require(commitments[_commitment], "Commitment is not found in the set!");
-        
-        uint256 recipient;
-        assembly {
-                recipient := calldataload(add(calldataload(0x04), 0x24))
-        } 
-        require(recipient == uint256(uint160(address(_recipient))), "The same recipient was not provided to the proof");
-
+    
         bool proofResult = verifier.verify(proof);
         require(proofResult, "Invalid withdraw proof");
 
