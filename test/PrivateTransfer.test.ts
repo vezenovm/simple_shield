@@ -8,7 +8,7 @@ import { readFileSync } from 'fs';
 import path from 'path';
 import { randomBytes } from 'crypto'
 import { compile, acir_from_bytes } from '@noir-lang/noir_wasm';
-import { setup_generic_prover_and_verifier, create_proof, verify_proof } from '@noir-lang/barretenberg/dest/client_proofs';
+import { setup_generic_prover_and_verifier, create_proof, verify_proof, StandardExampleProver, StandardExampleVerifier } from '@noir-lang/barretenberg/dest/client_proofs';
 import { BarretenbergWasm } from '@noir-lang/barretenberg/dest/wasm';
 import { SinglePedersen } from '@noir-lang/barretenberg/dest/crypto/pedersen';
 import { Schnorr } from '@noir-lang/barretenberg/dest/crypto/schnorr';
@@ -66,6 +66,10 @@ function generateTestTransfers(num_transfers: number, schnorr: Schnorr) {
   return transfers;
 }
 
+let acir: any;
+let prover: StandardExampleProver;
+let verifier: StandardExampleVerifier;
+
 before(async () => {
   signers = await ethers.getSigners();
   recipient = signers[1].address;
@@ -81,13 +85,17 @@ before(async () => {
   tree.insert(transfers[0].note_commitment.toString('hex'));
   tree.insert(transfers[1].note_commitment.toString('hex'));
   note_root = tree.root();
+
+  // If preferred, uncomment the two lines below and comment out the lines below that read in the ACIR from file
+  // let compiled_program = compile(path.resolve(__dirname, '../circuits/src/main.nr'));
+  // acir = compiled_program.circuit;
+  let acirByteArray = path_to_uint8array(path.resolve(__dirname, '../circuits/build/p.acir'));
+  acir = acir_from_bytes(acirByteArray);
+  [prover, verifier] = await setup_generic_prover_and_verifier(acir);
 });
 
 describe("Noir circuit verifies succesfully using Typescript", () => {
   it("Simple shield works for merkle tree insert, compiled using noir wasm", async () => {
-    let compiled_program = compile(path.resolve(__dirname, '../circuits/src/main.nr'));
-    let acir = compiled_program.circuit;
-
     let merkleProof = tree.proof(0);
     let note_hash_path = merkleProof.pathElements
 
@@ -104,9 +112,7 @@ describe("Noir circuit verifies succesfully using Typescript", () => {
       secret: `0x` + transfers[0].secret.toString('hex'),
       return: [`0x` + transfers[0].nullifier.toString('hex'), recipient]
     };
-    
-    let [prover, verifier] = await setup_generic_prover_and_verifier(acir);
-    
+        
     const proof: Buffer = await create_proof(prover, acir, abi);
 
     const verified = await verify_proof(verifier, proof);
@@ -127,9 +133,6 @@ describe("Noir circuit verifies succesfully using Typescript", () => {
   });
 
   it("Simple shield works for merkle tree insert, compiled using nargo", async () => {
-    let acirByteArray = path_to_uint8array(path.resolve(__dirname, '../circuits/build/p.acir'));
-    let acir = acir_from_bytes(acirByteArray);
-
     let merkleProof = tree.proof(0);
     let note_hash_path = merkleProof.pathElements;
     
@@ -146,8 +149,6 @@ describe("Noir circuit verifies succesfully using Typescript", () => {
       secret: `0x` + transfers[0].secret.toString('hex'),
       return: [`0x` + transfers[0].nullifier.toString('hex'), recipient],
     };
-
-    let [prover, verifier] = await setup_generic_prover_and_verifier(acir);
     
     const proof = await create_proof(prover, acir, abi);
 
@@ -157,9 +158,6 @@ describe("Noir circuit verifies succesfully using Typescript", () => {
   });
 
   it("Simple shield should work on 2nd merkle tree insert", async () => {
-    let compiled_program = compile(path.resolve(__dirname, '../circuits/src/main.nr'));
-    let acir = compiled_program.circuit;
-
     let merkleProof = tree.proof(1);
     let note_hash_path = merkleProof.pathElements
 
@@ -178,8 +176,6 @@ describe("Noir circuit verifies succesfully using Typescript", () => {
       secret: `0x` + transfers[1].secret.toString('hex'),
       return: [`0x` + transfers[1].nullifier.toString('hex'), recipient]
     };
-
-    let [prover, verifier] = await setup_generic_prover_and_verifier(acir);
     
     const proof = await create_proof(prover, acir, abi);
 
@@ -206,9 +202,6 @@ describe("Prviate Transfer works with Solidity verifier", () => {
   })
 
   it("Private transfer should work using Solidity verifier", async () => {
-    let compiled_program = compile(path.resolve(__dirname, '../circuits/src/main.nr'));
-    let acir = compiled_program.circuit;
-
     let merkleProof = tree.proof(0);
     let note_hash_path = merkleProof.pathElements;
     let nullifierHexString = `0x` + transfers[0].nullifier.toString('hex');
@@ -226,8 +219,6 @@ describe("Prviate Transfer works with Solidity verifier", () => {
       secret: `0x` + transfers[0].secret.toString('hex'),
       return: [nullifierHexString, recipient],
     };
-
-    let [prover, verifier] = await setup_generic_prover_and_verifier(acir);
 
     const proof = await create_proof(prover, acir, abi);
 
@@ -252,9 +243,6 @@ describe("Prviate Transfer works with Solidity verifier", () => {
   });
 
   it("Private Transfer should successfully perform a 2nd transfer", async () => {
-    let compiled_program = compile(path.resolve(__dirname, '../circuits/src/main.nr'));
-    let acir = compiled_program.circuit;
-
     let merkleProof = tree.proof(1);
     let note_hash_path = merkleProof.pathElements;
 
@@ -275,8 +263,6 @@ describe("Prviate Transfer works with Solidity verifier", () => {
       return: [nullifierHexString, signers[2].address]
     };
     
-    let [prover, verifier] = await setup_generic_prover_and_verifier(acir);
-
     const proof = await create_proof(prover, acir, abi);
 
     const verified = await verify_proof(verifier, proof);
