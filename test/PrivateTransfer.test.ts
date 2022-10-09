@@ -17,9 +17,6 @@ import { MerkleTree } from "../utils/MerkleTree";
 
 const amount = process.env.ETH_AMOUNT || "1000000000000000000"; // 1 ether
 
-// contract
-let [Verifier, PrivateTransfer]: ContractFactory[] = [];
-let [verifierContract, privateTransfer]: Contract[] = [];
 let signers: SignerWithAddress[];
 let tree: MerkleTree;
 let note_root: string;
@@ -38,33 +35,8 @@ interface Transfer {
   secret: Buffer,
   nullifier: Buffer
 }
+// Array of transfer objects to group data necessary for tests
 let transfers: Transfer[] = [];
-
-function generateTestTransfers(num_transfers: number, schnorr: Schnorr) {
-  let transfers = [];
-  for (var i = 0; i < num_transfers; i++) {
-    sender_priv_key = Buffer.from("000000000000000000000000000000000000000000000000000000616c696365", "hex");
-    let sender_public_key = schnorr.computePublicKey(sender_priv_key);
-    sender_pubkey_x = sender_public_key.subarray(0, 32);
-    sender_pubkey_y = sender_public_key.subarray(32)
-    console.log('sender public key x: ' + sender_pubkey_x.toString('hex') + '\sender pubkey y: ' + sender_pubkey_y.toString('hex'));
-    
-    const secret = randomBytes(32)
-    note_commitment = pedersen.compressInputs([sender_pubkey_x, sender_pubkey_y, secret]);
-    console.log('note_commitment: ' + note_commitment.toString('hex'));
-
-    nullifier = pedersen.compressInputs([note_commitment, Buffer.from(toFixedHex(i, false), 'hex'), sender_priv_key]);
-    console.log('nullifier: ' + nullifier.toString('hex'));
-
-    let transfer: Transfer = {
-      note_commitment: note_commitment,
-      secret: secret,
-      nullifier: nullifier
-    };
-    transfers.push(transfer);
-  }
-  return transfers;
-}
 
 let acir: any;
 let prover: StandardExampleProver;
@@ -86,7 +58,7 @@ before(async () => {
   tree.insert(transfers[1].note_commitment.toString('hex'));
   note_root = tree.root();
 
-  // If preferred, uncomment the two lines below and comment out the lines below that read in the ACIR from file
+  // NOTE: If preferred you can compile directly in Typescript. Just uncomment the two lines below and comment out the lines below that read in the ACIR from file
   // let compiled_program = compile(path.resolve(__dirname, '../circuits/src/main.nr'));
   // acir = compiled_program.circuit;
   let acirByteArray = path_to_uint8array(path.resolve(__dirname, '../circuits/build/p.acir'));
@@ -104,11 +76,7 @@ describe("Noir circuit verifies succesfully using Typescript", () => {
       priv_key: `0x` + sender_priv_key.toString('hex'),
       note_root: `0x` + note_root, 
       index: 0,
-      note_hash_path: [
-        `0x` + note_hash_path[0],
-        `0x` + note_hash_path[1],
-        `0x` + note_hash_path[2],
-      ],
+      note_hash_path: generateHashPathInput(note_hash_path),
       secret: `0x` + transfers[0].secret.toString('hex'),
       return: [`0x` + transfers[0].nullifier.toString('hex'), recipient]
     };
@@ -141,11 +109,7 @@ describe("Noir circuit verifies succesfully using Typescript", () => {
       priv_key: `0x` + sender_priv_key.toString('hex'),
       note_root: `0x` + note_root, 
       index: 0,
-      note_hash_path: [
-        `0x` + note_hash_path[0],
-        `0x` + note_hash_path[1],
-        `0x` + note_hash_path[2],
-      ],
+      note_hash_path: generateHashPathInput(note_hash_path),
       secret: `0x` + transfers[0].secret.toString('hex'),
       return: [`0x` + transfers[0].nullifier.toString('hex'), recipient],
     };
@@ -168,11 +132,7 @@ describe("Noir circuit verifies succesfully using Typescript", () => {
       priv_key: `0x` + sender_priv_key.toString('hex'),
       note_root: `0x` + note_root, 
       index: 1,
-      note_hash_path: [
-        `0x` + note_hash_path[0],
-        `0x` + note_hash_path[1],
-        `0x` + note_hash_path[2],
-      ],
+      note_hash_path: generateHashPathInput(note_hash_path),
       secret: `0x` + transfers[1].secret.toString('hex'),
       return: [`0x` + transfers[1].nullifier.toString('hex'), recipient]
     };
@@ -187,6 +147,9 @@ describe("Noir circuit verifies succesfully using Typescript", () => {
 });
 
 describe("Prviate Transfer works with Solidity verifier", () => {
+  let [Verifier, PrivateTransfer]: ContractFactory[] = [];
+  let [verifierContract, privateTransfer]: Contract[] = [];
+
   const numCommitments: number = 2;
   const privateTransactionAmount: BigNumber = utils.parseEther("1.0");
   let commitments: string[] = [];
@@ -211,11 +174,7 @@ describe("Prviate Transfer works with Solidity verifier", () => {
       priv_key: `0x` + sender_priv_key.toString('hex'),
       note_root: `0x` + note_root, 
       index: 0,
-      note_hash_path: [
-        `0x` + note_hash_path[0],
-        `0x` + note_hash_path[1],
-        `0x` + note_hash_path[2],
-      ],
+      note_hash_path: generateHashPathInput(note_hash_path),
       secret: `0x` + transfers[0].secret.toString('hex'),
       return: [nullifierHexString, recipient],
     };
@@ -232,6 +191,7 @@ describe("Prviate Transfer works with Solidity verifier", () => {
     let args = [`0x` + fake_proof.toString('hex'), `0x` + note_root, commitments[0]];
     await expect(privateTransfer.withdraw(...args)).to.be.revertedWith('Proof failed');
 
+    // Unaltered inputs should pass verification and perform a withdrawal
     const before = await provider.getBalance(recipient);
 
     args = [`0x` + proof.toString('hex'), `0x` + note_root, commitments[0]];
@@ -254,11 +214,7 @@ describe("Prviate Transfer works with Solidity verifier", () => {
       priv_key: `0x` + sender_priv_key.toString('hex'),
       note_root: `0x` + note_root, 
       index: 1,
-      note_hash_path: [
-        `0x` + note_hash_path[0],
-        `0x` + note_hash_path[1],
-        `0x` + note_hash_path[2],
-      ],
+      note_hash_path: generateHashPathInput(note_hash_path),
       secret: `0x` + transfers[1].secret.toString('hex'),
       return: [nullifierHexString, signers[2].address]
     };
@@ -291,6 +247,41 @@ function path_to_uint8array(path: string) {
 const toFixedHex = (number: number, pad0x: boolean, length = 32) => {
   let hexString = number.toString(16).padStart(length * 2, '0');
   return (pad0x ? `0x` + hexString : hexString);
+}
+
+function generateHashPathInput(hash_path: string[]) {
+  let hash_path_input = [];
+  for (var i = 0; i < hash_path.length; i++) {
+    hash_path_input.push(`0x` + hash_path[i]);
+  }
+  return hash_path_input;
+}
+
+function generateTestTransfers(num_transfers: number, schnorr: Schnorr) {
+  let transfers = [];
+  for (var i = 0; i < num_transfers; i++) {
+    sender_priv_key = Buffer.from("000000000000000000000000000000000000000000000000000000616c696365", "hex");
+    let sender_public_key = schnorr.computePublicKey(sender_priv_key);
+    sender_pubkey_x = sender_public_key.subarray(0, 32);
+    sender_pubkey_y = sender_public_key.subarray(32)
+    console.log('sender public key x: ' + sender_pubkey_x.toString('hex') + '\sender pubkey y: ' + sender_pubkey_y.toString('hex'));
+    
+    const secret = randomBytes(32)
+    // Pedersen is declared globally 
+    note_commitment = pedersen.compressInputs([sender_pubkey_x, sender_pubkey_y, secret]);
+    console.log('note_commitment: ' + note_commitment.toString('hex'));
+
+    nullifier = pedersen.compressInputs([note_commitment, Buffer.from(toFixedHex(i, false), 'hex'), sender_priv_key]);
+    console.log('nullifier: ' + nullifier.toString('hex'));
+
+    let transfer: Transfer = {
+      note_commitment: note_commitment,
+      secret: secret,
+      nullifier: nullifier
+    };
+    transfers.push(transfer);
+  }
+  return transfers;
 }
   
 
