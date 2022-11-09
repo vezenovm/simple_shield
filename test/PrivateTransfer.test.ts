@@ -8,7 +8,7 @@ import { readFileSync } from 'fs';
 import path from 'path';
 import { randomBytes } from 'crypto'
 import { compile, acir_from_bytes } from '@noir-lang/noir_wasm';
-import { setup_generic_prover_and_verifier, create_proof, verify_proof, StandardExampleProver, StandardExampleVerifier } from '@noir-lang/barretenberg/dest/client_proofs';
+import { setup_generic_prover_and_verifier, create_proof, verify_proof, StandardExampleProver, StandardExampleVerifier, getCircuitSize } from '@noir-lang/barretenberg/dest/client_proofs';
 import { BarretenbergWasm } from '@noir-lang/barretenberg/dest/wasm';
 import { SinglePedersen } from '@noir-lang/barretenberg/dest/crypto/pedersen';
 import { Schnorr } from '@noir-lang/barretenberg/dest/crypto/schnorr';
@@ -59,6 +59,7 @@ before(async () => {
   note_root = tree.root();
 
   // NOTE: If preferred you can compile directly in Typescript. Just uncomment the two lines below and comment out the lines below that read in the ACIR from file
+  // Make sure to change the generate_sol_verifier script to compile in TS as well to avoid any differences in the ACIR
   // let compiled_program = compile(path.resolve(__dirname, '../circuits/src/main.nr'));
   // acir = compiled_program.circuit;
   let acirByteArray = path_to_uint8array(path.resolve(__dirname, '../circuits/build/p.acir'));
