@@ -165,80 +165,63 @@ describe("Prviate Transfer works with Solidity verifier", () => {
     privateTransfer = await PrivateTransfer.deploy(verifierContract.address, amount, `0x` + note_root, commitments, { value: BigNumber.from(numCommitments).mul(privateTransactionAmount) } );
   })
 
-  it("Private transfer should work using Solidity verifier", async () => {
-    let merkleProof = tree.proof(0);
-    let note_hash_path = merkleProof.pathElements;
-    let nullifierHexString = `0x` + transfers[0].nullifier.toString('hex');
+  it("Private Transfer should successfully verify using proof from nargo", async () => {
+    let abi_values = [
+      "0x2f36d4404719a30512af45be47c9732e916cb131933102b04ba6432602db209c",
+      "0x051958f369df0499e3f8cb312ebc39d5cc62c43ed851ad3931c7bd6296a44529",
+      "0x00000000000000000000000070997970c51812dc3a010c7d01b50e0d17dc79c8"
+    ]
+    let pubInputs = serialise_public_inputs(abi_values);
+    const proofData = readFileSync(`../circuits/proofs/p.proof`);
+    let proof = Buffer.from(proofData.toString(), "hex");
 
-    let abi = {
-      recipient: recipient,
-      priv_key: `0x` + sender_priv_key.toString('hex'),
-      note_root: `0x` + note_root, 
-      index: 0,
-      note_hash_path: generateHashPathInput(note_hash_path),
-      secret: `0x` + transfers[0].secret.toString('hex'),
-      return: [nullifierHexString, recipient],
-    };
-
-    const proof = await create_proof(prover, acir, abi);
-
-    const verified = await verify_proof(verifier, proof);
-    expect(verified).eq(true);
-
-    // Attempt to alter recipient should fail verification
-    const fake_recipient = Buffer.from(serialise_public_inputs([signers[19].address]));
-    let fake_proof: Buffer = Buffer.from(proof);
-    fake_proof.fill(fake_recipient, 64, 96);
-    let args = [`0x` + fake_proof.toString('hex'), `0x` + note_root, commitments[0]];
-    await expect(privateTransfer.withdraw(...args)).to.be.revertedWith('Proof failed');
-
-    // Unaltered inputs should pass verification and perform a withdrawal
-    const before = await provider.getBalance(recipient);
-
-    args = [`0x` + proof.toString('hex'), `0x` + note_root, commitments[0]];
-    await privateTransfer.withdraw(...args);
-
-    const after = await provider.getBalance(recipient);
-
-    expect(after.sub(before)).to.equal(privateTransactionAmount);
-  });
-
-  it("Private Transfer should successfully perform a 2nd transfer", async () => {
-    let merkleProof = tree.proof(1);
-    let note_hash_path = merkleProof.pathElements;
-
-    nullifier = pedersen.compressInputs([note_commitment, Buffer.from(toFixedHex(1, false), 'hex'), sender_priv_key]);
-    let nullifierHexString = `0x` + transfers[1].nullifier.toString('hex');
-
-    let abi = {
-      recipient: signers[2].address,
-      priv_key: `0x` + sender_priv_key.toString('hex'),
-      note_root: `0x` + note_root, 
-      index: 1,
-      note_hash_path: generateHashPathInput(note_hash_path),
-      secret: `0x` + transfers[1].secret.toString('hex'),
-      return: [nullifierHexString, signers[2].address]
-    };
-    
-    const proof = await create_proof(prover, acir, abi);
-
-    const verified = await verify_proof(verifier, proof);
-    expect(verified).eq(true);
+    proof = Buffer.concat([Buffer.from(pubInputs), proof]);
 
     const sc_verified = await verifierContract.verify(proof);
     expect(sc_verified).eq(true);
 
-    const before = await provider.getBalance(signers[2].address);
-
-    let args = [`0x` + proof.toString('hex'), `0x` + note_root, commitments[1]];
-    await privateTransfer.withdraw(...args);
-
-    const after = await provider.getBalance(signers[2].address);
-
-    expect(after.sub(before)).to.equal(privateTransactionAmount);
   });
 
+  // it("Private transfer should work using Solidity verifier", async () => {
+  //   let merkleProof = tree.proof(0);
+  //   let note_hash_path = merkleProof.pathElements;
+  //   let nullifierHexString = `0x` + transfers[0].nullifier.toString('hex');
+
+  //   let abi = {
+  //     recipient: recipient,
+  //     priv_key: `0x` + sender_priv_key.toString('hex'),
+  //     note_root: `0x` + note_root, 
+  //     index: 0,
+  //     note_hash_path: generateHashPathInput(note_hash_path),
+  //     secret: `0x` + transfers[0].secret.toString('hex'),
+  //     return: [nullifierHexString, recipient],
+  //   };
+
+  //   const proof = await create_proof(prover, acir, abi);
+
+  //   const verified = await verify_proof(verifier, proof);
+  //   expect(verified).eq(true);
+
+  //   // Attempt to alter recipient should fail verification
+  //   const fake_recipient = Buffer.from(serialise_public_inputs([signers[19].address]));
+  //   let fake_proof: Buffer = Buffer.from(proof);
+  //   fake_proof.fill(fake_recipient, 64, 96);
+  //   let args = [`0x` + fake_proof.toString('hex'), `0x` + note_root, commitments[0]];
+  //   await expect(privateTransfer.withdraw(...args)).to.be.revertedWith('Proof failed');
+
+  //   // Unaltered inputs should pass verification and perform a withdrawal
+  //   const before = await provider.getBalance(recipient);
+
+  //   args = [`0x` + proof.toString('hex'), `0x` + note_root, commitments[0]];
+  //   await privateTransfer.withdraw(...args);
+
+  //   const after = await provider.getBalance(recipient);
+
+  //   expect(after.sub(before)).to.equal(privateTransactionAmount);
+  // });
+
 });
+
 
 function path_to_uint8array(path: string) {
   let buffer = readFileSync(path);
