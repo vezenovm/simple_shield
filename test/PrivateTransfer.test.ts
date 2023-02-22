@@ -7,13 +7,15 @@ import { expect } from "chai";
 import { readFileSync } from 'fs';
 import path from 'path';
 import { randomBytes } from 'crypto'
-import { compile, acir_from_bytes } from '@noir-lang/noir_wasm';
+import initNoirWasm, { compile, acir_from_bytes } from '@noir-lang/noir_wasm';
 import { setup_generic_prover_and_verifier, create_proof, verify_proof, StandardExampleProver, StandardExampleVerifier, getCircuitSize } from '@noir-lang/barretenberg/dest/client_proofs';
 import { BarretenbergWasm } from '@noir-lang/barretenberg/dest/wasm';
 import { SinglePedersen } from '@noir-lang/barretenberg/dest/crypto/pedersen';
 import { Schnorr } from '@noir-lang/barretenberg/dest/crypto/schnorr';
 import { serialise_public_inputs } from '@noir-lang/aztec_backend';
 import { MerkleTree } from "../utils/MerkleTree";
+import { MerkleTreeMiMC } from "../utils/MerkleTreeMiMC";
+import { buildMimc7 } from 'circomlibjs';
 
 const amount = process.env.ETH_AMOUNT || "1000000000000000000"; // 1 ether
 
@@ -42,7 +44,7 @@ let acir: any;
 let prover: StandardExampleProver;
 let verifier: StandardExampleVerifier;
 
-before(async () => {
+before(async () => {  
   signers = await ethers.getSigners();
   recipient = signers[1].address;
   barretenberg = await BarretenbergWasm.new();
@@ -50,19 +52,25 @@ before(async () => {
   pedersen = new SinglePedersen(barretenberg);
   let schnorr = new Schnorr(barretenberg);
   tree = new MerkleTree(3, barretenberg);
-  
+
   let test_transfers = generateTestTransfers(2, schnorr);
   transfers.push(...test_transfers);
 
   tree.insert(transfers[0].note_commitment.toString('hex'));
   tree.insert(transfers[1].note_commitment.toString('hex'));
   note_root = tree.root();
+  
+  let mimc7 = await buildMimc7();
+  let mimc_tree = new MerkleTreeMiMC(3, mimc7);
+  tree.insert(transfers[0].note_commitment.toString('hex'));
+  tree.insert(transfers[0].note_commitment.toString('hex'));
+  console.log(mimc_tree.root());
 
   // NOTE: If preferred you can compile directly in Typescript. Just uncomment the two lines below and comment out the lines below that read in the ACIR from file
   // Make sure to change the generate_sol_verifier script to compile in TS as well to avoid any differences in the ACIR
   // let compiled_program = compile(path.resolve(__dirname, '../circuits/src/main.nr'));
   // acir = compiled_program.circuit;
-  let acirByteArray = path_to_uint8array(path.resolve(__dirname, '../circuits/build/p.acir'));
+  let acirByteArray = path_to_uint8array(path.resolve(__dirname, '../circuits/target/p.acir'));
   acir = acir_from_bytes(acirByteArray);
   [prover, verifier] = await setup_generic_prover_and_verifier(acir);
 });

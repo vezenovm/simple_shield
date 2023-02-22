@@ -473,10 +473,9 @@
   resolved "https://registry.yarnpkg.com/@noir-lang/aztec_backend/-/aztec_backend-0.11.0.tgz#c07d3ed8e388c32aa560c6239d296de32c2b78f4"
   integrity sha512-gJIdSOeUClJGGt7j1cTD0skd3UjO4eeg1OSjQyj36NNf9A68PDnvCen/uT2aQncCVanREUUXxP586voxElWRYA==
 
-"@noir-lang/aztec_backend@^0.10.0":
-  version "0.10.0"
-  resolved "https://registry.yarnpkg.com/@noir-lang/aztec_backend/-/aztec_backend-0.10.0.tgz#11ffe93de3d98dd90b5b1a93ac46702268eb7ed4"
-  integrity sha512-E0D2acadaheVua58BFOYLj5b7B0zL2Ron+rKAByeSCnknQ62wc9VArbK4UoJci542ZeFHI1bL3hmmKk+k9tx/Q==
+"@noir-lang/aztec_backend@git+https://github.com/kobyhallx/aztec-backend.git":
+  version "0.1.0-0c3b2f2"
+  resolved "git+https://github.com/kobyhallx/aztec-backend.git#c166c88595b3972fde2f4e3c54fa17d96f8ecfdf"
 
 "@noir-lang/barretenberg@^2.18.0":
   version "2.19.0"
@@ -499,10 +498,15 @@
     threads "1.7.0"
     tslib "^2.0.0"
 
-"@noir-lang/noir_wasm@^0.10.0":
-  version "0.10.0"
-  resolved "https://registry.yarnpkg.com/@noir-lang/noir_wasm/-/noir_wasm-0.10.0.tgz#9223c2ab92cf24da7e483c4131179a4d62a59c19"
-  integrity sha512-ZoNlOqjGxf0YDCQP/tmD+2KsCePvjc0xcMiefmNREDyE3rpDCUiLt6B7kaXztFqPxpT7hi8+ARFUx7cZyqqZtg==
+"@noir-lang/noir-source-resolver@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@noir-lang/noir-source-resolver/-/noir-source-resolver-1.0.0.tgz#5c19579694e665e46380ee361e502a10b7c08386"
+  integrity sha512-4ywoMyxMeZgDl2dXVm4IUpEaR86nIi+dLRNh20xzYue4zDdidNxCZC4jFZlMPt2gjQ0vbKI8TB3LtDrIIjufHg==
+
+"@noir-lang/noir_wasm@^0.2.0-ca986a4":
+  version "0.2.0-ca986a4"
+  resolved "https://registry.yarnpkg.com/@noir-lang/noir_wasm/-/noir_wasm-0.2.0-ca986a4.tgz#80c264228c00d36b489286313f53531312afe5a2"
+  integrity sha512-P4aUbz3SOWGoQQibjWM1xXAAOfQ1K8g4289vN6BydBP8WxfHohc5XkRrFUCM/aIk65Tn0iFUHkDBGyDA6a6Klw==
 
 "@nomicfoundation/ethereumjs-block@^4.0.0":
   version "4.0.0"
@@ -1996,11 +2000,6 @@ circom_runtime@0.1.20:
   integrity sha512-61AnccA8Ozo5apyDf3hR1JMDDNx1DttKll2bdxVpNjUaTiawDuuYE0VNmRvuoKlcy/WAY+HtD3K994WGrOFhJQ==
   dependencies:
     ffjavascript "0.2.55"
-
-circomlib@^2.0.5:
-  version "2.0.5"
-  resolved "https://registry.yarnpkg.com/circomlib/-/circomlib-2.0.5.tgz#183c703e53ed7d011811842dbeeeb9819f4cc1d6"
-  integrity sha512-O7NQ8OS+J4eshBuoy36z/TwQU0YHw8W3zxZcs4hVwpEll3e4hDm3mgkIPqItN8FDeLEKZFK3YeT/+k8TiLF3/A==
 
 circomlibjs@0.0.8:
   version "0.0.8"
