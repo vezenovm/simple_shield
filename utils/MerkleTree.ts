@@ -1,5 +1,3 @@
-// import { Pedersen, SinglePedersen } from '@aztec/barretenberg/crypto/pedersen';
-// import { BarretenbergWasm } from '@aztec/barretenberg/wasm';
 import { SinglePedersen } from '@noir-lang/barretenberg/dest/crypto/pedersen';
 import { BarretenbergWasm } from '@noir-lang/barretenberg/dest/wasm';
 

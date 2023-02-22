@@ -1,5 +1,3 @@
-// import { Pedersen, SinglePedersen } from '@aztec/barretenberg/crypto/pedersen';
-// import { BarretenbergWasm } from '@aztec/barretenberg/wasm';
 import { Mimc7 } from 'circomlibjs';
 
 // let mimc = buildMimc7();

@@ -40,11 +40,10 @@
     "zkp-merkle-airdrop-lib": "^1.0.5"
   },
   "dependencies": {
-    "@aztec/barretenberg": "^2.1.42",
-    "@noir-lang/aztec_backend": "git+https://github.com/kobyhallx/aztec-backend.git",
-    "@noir-lang/barretenberg": "^2.18.0",
-    "@noir-lang/noir-source-resolver": "^1.0.0",
+    "@noir-lang/aztec_backend": "github:kobyhallx/aztec-backend#c166c88595b3972fde2f4e3c54fa17d96f8ecfdf",
+    "@noir-lang/barretenberg": "github:noir-lang/barretenberg#ecbdac1bda46ed1ac0470a94cfe42b692b16ee59",
     "@noir-lang/noir_wasm": "^0.2.0-ca986a4",
+    "@noir-lang/noir-source-resolver": "^1.0.0",
     "@openzeppelin/contracts": "^4.7.1",
     "@typechain/ethers-v5": "^10.1.0",
     "bigint-buffer": "^1.1.5",
