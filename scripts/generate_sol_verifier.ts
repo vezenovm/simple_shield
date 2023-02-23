@@ -1,11 +1,12 @@
 import { resolve, join } from 'path';
-import { acir_from_bytes } from '@noir-lang/noir_wasm';
-import { setup_generic_prover_and_verifier } from '@noir-lang/barretenberg/dest/client_proofs';
+import { acir_read_bytes } from '@noir-lang/noir_wasm';
+// @ts-ignore -- no types
+import { setup_generic_prover_and_verifier } from '@noir-lang/barretenberg';
 import { writeFileSync, readFileSync } from 'fs';
 
 async function generate_sol_verifier() {
-    let acirByteArray = path_to_uint8array(resolve(__dirname, '../circuits/build/p.acir'));
-    let acir = acir_from_bytes(acirByteArray);
+    let acirByteArray = path_to_uint8array(resolve(__dirname, '../circuits/target/p.acir'));
+    let acir = acir_read_bytes(acirByteArray);
     
     let [_, verifier] = await setup_generic_prover_and_verifier(acir);
 

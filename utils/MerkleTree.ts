@@ -1,5 +1,5 @@
-import { SinglePedersen } from '@noir-lang/barretenberg/dest/crypto/pedersen';
-import { BarretenbergWasm } from '@noir-lang/barretenberg/dest/wasm';
+import { SinglePedersen } from '@noir-lang/barretenberg';
+import { BarretenbergWasm } from '@noir-lang/barretenberg';
 
 // export function MiMCSponge(left: string, right: string): string {
 //   return mimcsponge.multiHash([BigInt(left), BigInt(right)]).toString();

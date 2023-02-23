@@ -1,6 +1,5 @@
+// @ts-ignore -- no types
 import { Mimc7 } from 'circomlibjs';
-
-// let mimc = buildMimc7();
 
 // function bigint_to_bytes32(x) {
 //     let hex = x.toString(16);

@@ -50,8 +50,8 @@ contract PrivateTransfer is ReentrancyGuard {
         uint256 recipient;
         bytes32 _nullifierHash;
         assembly {
-                _nullifierHash := calldataload(add(calldataload(0x04), 0x44))
-                recipient := calldataload(add(calldataload(0x04), 0x64))
+                recipient := calldataload(add(calldataload(0x04), 0x24))
+                _nullifierHash := calldataload(add(calldataload(0x04), 0x64))
         } 
         address payable _recipient = payable(address(uint160(recipient)));
 

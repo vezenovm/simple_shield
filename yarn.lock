@@ -448,13 +448,13 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@noir-lang/aztec_backend@github:kobyhallx/aztec-backend#c166c88595b3972fde2f4e3c54fa17d96f8ecfdf":
+"@noir-lang/aztec_backend@github:kobyhallx/aztec-backend#b3f6d16c35fdfe6280834eb290658eaa1a020243":
   version "0.1.0-0c3b2f2"
-  resolved "https://codeload.github.com/kobyhallx/aztec-backend/tar.gz/c166c88595b3972fde2f4e3c54fa17d96f8ecfdf"
+  resolved "https://codeload.github.com/kobyhallx/aztec-backend/tar.gz/b3f6d16c35fdfe6280834eb290658eaa1a020243"
 
-"@noir-lang/barretenberg@github:noir-lang/barretenberg#ecbdac1bda46ed1ac0470a94cfe42b692b16ee59":
+"@noir-lang/barretenberg@github:noir-lang/barretenberg#c888a1e608e12be89274294e4d5cb3e4a36b916f":
   version "2.19.0-8c75fc36"
-  resolved "https://codeload.github.com/noir-lang/barretenberg/tar.gz/ecbdac1bda46ed1ac0470a94cfe42b692b16ee59"
+  resolved "https://codeload.github.com/noir-lang/barretenberg/tar.gz/c888a1e608e12be89274294e4d5cb3e4a36b916f"
   dependencies:
     "@types/detect-node" "^2.0.0"
     "@types/levelup" "^4.3.0"
@@ -478,10 +478,8 @@
   resolved "https://registry.yarnpkg.com/@noir-lang/noir-source-resolver/-/noir-source-resolver-1.0.0.tgz#5c19579694e665e46380ee361e502a10b7c08386"
   integrity sha512-4ywoMyxMeZgDl2dXVm4IUpEaR86nIi+dLRNh20xzYue4zDdidNxCZC4jFZlMPt2gjQ0vbKI8TB3LtDrIIjufHg==
 
-"@noir-lang/noir_wasm@^0.2.0-ca986a4":
-  version "0.2.0-ca986a4"
-  resolved "https://registry.yarnpkg.com/@noir-lang/noir_wasm/-/noir_wasm-0.2.0-ca986a4.tgz#80c264228c00d36b489286313f53531312afe5a2"
-  integrity sha512-P4aUbz3SOWGoQQibjWM1xXAAOfQ1K8g4289vN6BydBP8WxfHohc5XkRrFUCM/aIk65Tn0iFUHkDBGyDA6a6Klw==
+"@noir-lang/noir_wasm@file:../noir/crates/wasm/pkg":
+  version "0.2.0-575436fa"
 
 "@nomicfoundation/ethereumjs-block@^4.0.0":
   version "4.0.0"
