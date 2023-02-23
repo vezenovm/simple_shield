@@ -78,21 +78,8 @@ before(async () => {
   acir = acir_read_bytes(acirByteArray);
   console.log("read in acir");
 
-  // let abi = {
-  //   x: 4,
-  //   y: 5,
-  // }
-
-  // let witness_arr = await compute_partial_witnesses(acir, abi);
-  // console.log('witness_arr: ', witness_arr.toString());
-
   [prover, verifier] = await setup_generic_prover_and_verifier(acir);
   console.log("setup prover and verifier");
-
-  // const proof = await prover.createProof(witness_arr);
-
-  // const verified = await verify_proof(verifier, proof);
-  // console.log('verified: ', verified)
 });
 
 describe("Noir circuit verifies succesfully using Typescript", () => {
@@ -110,13 +97,6 @@ describe("Noir circuit verifies succesfully using Typescript", () => {
       secret: `0x` + transfers[0].secret.toString('hex'),
       // return: [`0x` + transfers[0].nullifier.toString('hex'), recipient]
     };
-
-    // let abi = {
-    //   x: 4,
-    //   y: 5,
-    // }
-
-    // console.log(abi);
         
     const proof: Buffer = await create_proof(prover, acir, abi);
     console.log('made proof');
@@ -348,64 +328,6 @@ function generateTestTransfers(num_transfers: number, schnorr: Schnorr) {
     transfers.push(transfer);
   }
   return transfers;
-}
-
-async function compute_partial_witnesses(circuit: any, abi: any) {
-  // Use the ACIR representation to compute the partial witnesses
-
-
-  // Assumption: .values() will always return the values in a deterministic order;
-  // (from left to right) in the abi object
-
-  let values: string[] = [];
-  for (const [_, v] of Object.entries(abi)) {
-    let entry_values = AnyToHexStrs(v);
-    values = values.concat(entry_values);
-  }
-
-  console.log('circuit: ', circuit);
-  console.log('values: ', values);
-
-  return compute_witnesses(circuit, values);
-}
-
-
-function AnyToHexStrs(any_object: any) : string[]  {
-  let values : string[] = [] 
-    if (Array.isArray(any_object)) {
-      for (let variable of any_object) {
-        values  = values.concat(AnyToHexStrs(variable));
-      }
-    } else if (typeof any_object === 'string' || any_object instanceof String) {
-      // If the type is a string, we expect it to be a hex string
-      let string_object = any_object as string;
-    
-      if (isValidHex(string_object)) {
-        values.push(string_object)
-      } else {
-        // TODO: throw should not be in a library, but currently we aren't doing 
-        // TODO: much in terms of error handling
-        throw new Error("strings can only be hexadecimal and must start with 0x");
-      }
-      
-    } else if (Number.isInteger(any_object)) {
-      let number_object = any_object as number;
-      let number_hex = number_object.toString(16);
-      // The rust code only accepts even hex digits
-      let is_even_hex_length = number_hex.length %2 == 0;
-      if (is_even_hex_length) {
-        values.push("0x" + number_hex)
-      } else {
-        values.push("0x0" + number_hex)
-      }
-    } else {
-      throw new Error("unknown object type in the abi");
-    }
-    return values
-}
-
-function isValidHex(hex_str : string) : boolean {
-  return !isNaN(Number(hex_str))
 }
   
 
