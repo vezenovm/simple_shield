@@ -69,7 +69,7 @@ before(async () => {
   let test_mimc = MiMC7(mimc7, "0000000000000000000000000000000000000000000000000000000000000000", "0000000000000000000000000000000000000000000000000000000000000000")
   console.log('test_mimc: ', test_mimc);
 
-  let acirByteArray = path_to_uint8array(path.resolve(__dirname, '../circuits/target/c.acir'));
+  let acirByteArray = path_to_uint8array(path.resolve(__dirname, '../circuits/mimc_tree/target/c.acir'));
   acir = acir_read_bytes(acirByteArray);
   console.log("read in acir");
 
@@ -124,7 +124,7 @@ describe("Noir circuit verifies succesfully using Typescript", () => {
       note_root: `0x` + note_root, 
       index: 1,
       note_hash_path: generateHashPathInput(note_hash_path),
-      secret: `0x` + transfers[2].secret.toString('hex'),
+      secret: `0x` + transfers[1].secret.toString('hex'),
     };
 
     console.log(abi);

@@ -63,18 +63,12 @@ before(async () => {
   tree.insert(transfers[2].note_commitment.toString('hex'));
   note_root = tree.root(); 
 
-  let test_pedersen = pedersen.compressInputs([Buffer.from("0000000000000000000000000000000000000000000000000000000000000000", 'hex'), Buffer.from("0000000000000000000000000000000000000000000000000000000000000000", 'hex')]);
-  console.log('test_pedersen: ', test_pedersen.toString('hex'));
-
   // NOTE: If preferred you can compile directly in Typescript. Just uncomment the two lines below and comment out the lines below that read in the ACIR from file
   // Make sure to change the generate_sol_verifier script to compile in TS as well to avoid any differences in the ACIR
   // let compiled_program = compile(path.resolve(__dirname, '../circuits/src/main.nr'));
-  // console.log("compiled program in TS");
-  // console.dir(compiled_program.abi);
-  // console.dir(compiled_program.abi.param_witnesses);
   // acir = compiled_program.circuit;
 
-  let acirByteArray = path_to_uint8array(path.resolve(__dirname, '../circuits/target/c.acir'));
+  let acirByteArray = path_to_uint8array(path.resolve(__dirname, '../circuits/pedersen_tree/target/c.acir'));
   acir = acir_read_bytes(acirByteArray);
   console.log("read in acir");
 
@@ -86,7 +80,7 @@ describe("Noir circuit verifies succesfully using Typescript", () => {
   it("Simple shield works for merkle tree insert, compiled using nargo", async () => {
     let merkleProof = tree.proof(0);
     let note_hash_path = merkleProof.pathElements
-    console.log(transfers[0].nullifier.toString('hex'));
+    // console.log(transfers[0].nullifier.toString('hex'));
 
     let abi = {
       recipient: recipient,
@@ -95,14 +89,11 @@ describe("Noir circuit verifies succesfully using Typescript", () => {
       index: 0,
       note_hash_path: generateHashPathInput(note_hash_path),
       secret: `0x` + transfers[0].secret.toString('hex'),
-      // return: [`0x` + transfers[0].nullifier.toString('hex'), recipient]
     };
         
     const proof: Buffer = await create_proof(prover, acir, abi);
-    console.log('made proof');
-    console.log(proof.toString('hex'));
+
     const verified = await verify_proof(verifier, proof);
-    console.log('verified: ', verified)
     expect(verified).eq(true);
 
     // Attempt to alter recipient should fail verification
@@ -132,17 +123,11 @@ describe("Noir circuit verifies succesfully using Typescript", () => {
       index: 1,
       note_hash_path: generateHashPathInput(note_hash_path),
       secret: `0x` + transfers[1].secret.toString('hex'),
-      // return: [`0x` + transfers[1].nullifier.toString('hex'), recipient]
     };
-
-    console.log(abi);
     
     const proof = await create_proof(prover, acir, abi);
-    console.log("generated proof");
-    console.log(proof.toString('hex'));
 
     const verified = await verify_proof(verifier, proof);
-    console.log(verified);
     expect(verified).eq(true)
   });
 
@@ -159,24 +144,18 @@ describe("Noir circuit verifies succesfully using Typescript", () => {
       note_root: `0x` + note_root, 
       index: 2,
       note_hash_path: generateHashPathInput(note_hash_path),
-      secret: `0x` + transfers[1].secret.toString('hex'),
-      // return: [`0x` + transfers[1].nullifier.toString('hex'), recipient]
+      secret: `0x` + transfers[2].secret.toString('hex'),
     };
-
-    console.log(abi);
     
     const proof = await create_proof(prover, acir, abi);
-    console.log("generated proof");
-    console.log(proof.toString('hex'));
 
     const verified = await verify_proof(verifier, proof);
-    console.log(verified);
     expect(verified).eq(true)
   });
 
 });
 
-describe("Prviate Transfer works with Solidity verifier", () => {
+describe("Private Transfer works with Solidity verifier", () => {
   let [Verifier, PrivateTransfer]: ContractFactory[] = [];
   let [verifierContract, privateTransfer]: Contract[] = [];
 
@@ -185,9 +164,6 @@ describe("Prviate Transfer works with Solidity verifier", () => {
   let commitments: string[] = [];
 
   before("Set up PrivateTransfer and Verifier contracts", async () => {
-    const before = await provider.getBalance(recipient);
-    console.log('before: ', before);
-
     PrivateTransfer = await ethers.getContractFactory("PrivateTransfer");
     Verifier = await ethers.getContractFactory("TurboVerifier");
 
@@ -202,8 +178,6 @@ describe("Prviate Transfer works with Solidity verifier", () => {
     let note_hash_path = merkleProof.pathElements;
     let nullifierHexString = `0x` + transfers[0].nullifier.toString('hex');
 
-    console.log('nullifierHexString: ', nullifierHexString);
-
     let abi = {
       recipient: recipient,
       priv_key: `0x` + sender_priv_key.toString('hex'),
@@ -211,19 +185,12 @@ describe("Prviate Transfer works with Solidity verifier", () => {
       index: 0,
       note_hash_path: generateHashPathInput(note_hash_path),
       secret: `0x` + transfers[0].secret.toString('hex'),
-      return: [nullifierHexString, recipient],
     };
 
     const proof = await create_proof(prover, acir, abi);
-    console.log("got proof");
-    console.log(proof.toString('hex'));
 
     const verified = await verify_proof(verifier, proof);
-    console.log(verified);
-    // expect(verified).eq(true);
-
-    const sc_verified = await verifierContract.verify(proof);
-    console.log('sc_verified: ', sc_verified);
+    expect(verified).eq(true);
 
     // Attempt to alter recipient should fail verification
     const fake_recipient = Buffer.from(serialise_public_inputs([signers[19].address]));
@@ -232,16 +199,15 @@ describe("Prviate Transfer works with Solidity verifier", () => {
     let args = [`0x` + fake_proof.toString('hex'), `0x` + note_root, commitments[0]];
     await expect(privateTransfer.withdraw(...args)).to.be.revertedWith('Proof failed');
 
-
     // Unaltered inputs should pass verification and perform a withdrawal
     const before = await provider.getBalance(recipient);
-    console.log('before: ', before);
+
     args = [`0x` + proof.toString('hex'), `0x` + note_root, commitments[0]];
 
     await privateTransfer.withdraw(...args);
 
     const after = await provider.getBalance(recipient);
-    console.log('after: ', after);
+
     expect(after.sub(before)).to.equal(privateTransactionAmount);
   });
 
@@ -259,18 +225,15 @@ describe("Prviate Transfer works with Solidity verifier", () => {
       index: 1,
       note_hash_path: generateHashPathInput(note_hash_path),
       secret: `0x` + transfers[1].secret.toString('hex'),
-      // return: [nullifierHexString, signers[2].address]
     };
     
     const proof = await create_proof(prover, acir, abi);
-    // console.log(proof.toString('hex'));
+
     const verified = await verify_proof(verifier, proof);
-    // expect(verified).eq(true);
-    console.log('verified: ', verified);
+    expect(verified).eq(true);
 
     const sc_verified = await verifierContract.verify(proof);
-    console.log('sc_verified: ', sc_verified);
-    // expect(sc_verified).eq(true);
+    expect(sc_verified).eq(true);
 
     const before = await provider.getBalance(signers[2].address);
 
@@ -309,10 +272,12 @@ function generateTestTransfers(num_transfers: number, schnorr: Schnorr) {
     let sender_public_key = schnorr.computePublicKey(sender_priv_key);
     sender_pubkey_x = sender_public_key.subarray(0, 32);
     sender_pubkey_y = sender_public_key.subarray(32)
-    console.log('sender public key x: ' + sender_pubkey_x.toString('hex') + '\sender pubkey y: ' + sender_pubkey_y.toString('hex'));
+    console.log('sender public key x: ' + sender_pubkey_x.toString('hex') + ', sender pubkey y: ' + sender_pubkey_y.toString('hex'));
     
-    // const secret = randomBytes(32)
-    const secret = Buffer.from("1929ea3ab8d9106a899386883d9428f8256cfedb3c4f6b66bf4aa4d28a79988f", "hex");
+    const secret = randomBytes(32)
+    // Set secret that is used for testing
+    // const secret = Buffer.from("1929ea3ab8d9106a899386883d9428f8256cfedb3c4f6b66bf4aa4d28a79988f", "hex");
+
     // Pedersen is declared globally 
     note_commitment = pedersen.compressInputs([sender_pubkey_x, sender_pubkey_y, secret]);
     console.log('note_commitment: ' + note_commitment.toString('hex'));

@@ -43,7 +43,7 @@ contract PrivateTransfer is ReentrancyGuard {
     }
 
     function withdraw(
-        bytes calldata proof,
+        bytes calldata proof, // TOOD: separate public inputs before 
         bytes32 _root,
         uint256 _commitment
     ) external payable nonReentrant {
