@@ -164,8 +164,8 @@ describe("Private Transfer works with Solidity verifier", () => {
   let commitments: string[] = [];
 
   before("Set up PrivateTransfer and Verifier contracts", async () => {
-    PrivateTransfer = await ethers.getContractFactory("PrivateTransfer");
-    Verifier = await ethers.getContractFactory("TurboVerifier");
+    PrivateTransfer = await ethers.getContractFactory("PrivateTransferBasic");
+    Verifier = await ethers.getContractFactory("TurboVerifierBasicTransfer");
 
     commitments.push(`0x` + transfers[0].note_commitment.toString('hex'), `0x` + transfers[1].note_commitment.toString('hex')); 
 
@@ -275,7 +275,7 @@ function generateTestTransfers(num_transfers: number, schnorr: Schnorr) {
     console.log('sender public key x: ' + sender_pubkey_x.toString('hex') + ', sender pubkey y: ' + sender_pubkey_y.toString('hex'));
     
     const secret = randomBytes(32)
-    // Set secret that is used for testing
+    // Constant secret that is used for testing
     // const secret = Buffer.from("1929ea3ab8d9106a899386883d9428f8256cfedb3c4f6b66bf4aa4d28a79988f", "hex");
 
     // Pedersen is declared globally 

@@ -39,7 +39,6 @@ fn compute_root_from_leaf(leaf : Field, index : Field, hash_path: [Field]) -> Fi
     // TODO: found bug here fix it
     // std::println(b);
     let mut current = leaf;
-    // std::println(current);
     for i in 0..n {
         let path_bit = index_bits[i] as bool;
         let (hash_left, hash_right) = if path_bit {
@@ -49,7 +48,6 @@ fn compute_root_from_leaf(leaf : Field, index : Field, hash_path: [Field]) -> Fi
         };
 
         current = std::hash::mimc_bn254([hash_left, hash_right]);
-        // std::println(current);
     };
     current
 }

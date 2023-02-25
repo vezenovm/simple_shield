@@ -1,29 +1,20 @@
 // @ts-ignore -- no types
-import { Mimc7 } from 'circomlibjs';
+import { Mimc7 as MiMC } from 'circomlibjs';
 
-// function bigint_to_bytes32(x) {
-//     let hex = x.toString(16);
-//     return "0x" + "0".repeat(64 - hex.length) + hex;
-//   }
-  
-// function ff_to_bytes32(x, F) {
-//     let hex = mimc7.F.toString(x, 16);
-//     return "0x" + "0".repeat(64 - hex.length) + hex;
-// }
+export function MiMC7(mimc7: MiMC, left: string, right: string): string {
 
-export function MiMC7(mimc7: Mimc7, left: string, right: string): string {
-    // let left_hex = "0x" + left;
-    // let right_hex = "0x" + right;
     let left_hex = "0x" + "0".repeat(64 - left.length) + left;
     let right_hex = "0x" + "0".repeat(64 - right.length) + right;
-    // console.log(mimc7.F.e(left_hex));
-    // console.log(mimc7.F.e(right_hex));
-    let hash = mimc7.multiHash([mimc7.F.e(left_hex), mimc7.F.e(right_hex)]);
-    // console.log(hash);
+
+    // console.log('left_hex: ', left_hex);
+    // let left_hash = mimc7.hash(mimc7.F.e(left_hex), mimc7.F.e("0x" + "0".repeat(64)))
+    // let left_hash = mimc7.hash(left_hex, "0x" + "0".repeat(64))
+    // console.log('left_hash: ', mimc7.F.toString(left_hash, 16));
+
+    let hash = mimc7.multiHash([left_hex, right_hex]);
     let hex = mimc7.F.toString(hash, 16);
-    // console.log(hex);
     let padded_hex = "0".repeat(64 - hex.length) + hex;
-    // console.log(padded_hex);
+
     return padded_hex;
 }
 
@@ -39,18 +30,18 @@ export interface IMerkleTree {
 }
 
 export class MerkleTreeMiMC implements IMerkleTree {
-//   readonly zeroValue = "1cdcf02431ba623767fe389337d011df1048dcc24b98ed81cec97627bab454a0";
-  readonly zeroValue = "0000000000000000000000000000000000000000000000000000000000000000";
+//   readonly zeroValue = "0000000000000000000000000000000000000000000000000000000000000000";
+  readonly zeroValue = "18d85f3de6dcd78b6ffbf5d8374433a5528d8e3bf2100df0b7bb43a4c59ebd63"; // sha256("simple_shield")
   levels: number;
-  hashLeftRight: (mimc7: Mimc7, left: string, right: string) => string;
+  hashLeftRight: (mimc7: MiMC, left: string, right: string) => string;
   storage: Map<string, string>;
   zeros: string[];
   totalLeaves: number;
-  mimc7: Mimc7;
+  mimc7: MiMC;
 
   constructor(
     levels: number, 
-    mimc7: Mimc7,
+    mimc7: MiMC,
     defaultLeaves: string[] = [], 
     hashLeftRight = MiMC7) {
     this.levels = levels;
@@ -96,6 +87,10 @@ export class MerkleTreeMiMC implements IMerkleTree {
         numberOfNodesInLevel = Math.ceil(numberOfNodesInLevel / 2);
       }
     }
+  }
+
+  getZeros(): string[] {
+    return this.zeros;
   }
 
   static indexToKey(level: number, index: number): string {
@@ -172,6 +167,7 @@ export class MerkleTreeMiMC implements IMerkleTree {
         key: MerkleTreeMiMC.indexToKey(level, currentIndex),
         value: currentElement,
       });
+      
       currentElement = this.hashLeftRight(this.mimc7, left, right);
     };
 

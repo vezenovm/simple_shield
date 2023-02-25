@@ -16,6 +16,9 @@ const config: HardhatUserConfig = {
       hardfork: 'istanbul',
     },
   },
+  mocha: {
+    timeout: 200000
+  }
 };
 
 export default config;

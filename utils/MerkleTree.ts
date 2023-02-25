@@ -1,9 +1,7 @@
+// @ts-ignore -- no types
 import { SinglePedersen } from '@noir-lang/barretenberg';
+// @ts-ignore -- no types
 import { BarretenbergWasm } from '@noir-lang/barretenberg';
-
-// export function MiMCSponge(left: string, right: string): string {
-//   return mimcsponge.multiHash([BigInt(left), BigInt(right)]).toString();
-// }
 
 export function pedersenLeftRight(
   barretenberg: BarretenbergWasm, 
@@ -28,8 +26,8 @@ export interface IMerkleTree {
 }
 
 export class MerkleTree implements IMerkleTree {
-  // readonly zeroValue = "1cdcf02431ba623767fe389337d011df1048dcc24b98ed81cec97627bab454a0";
-  readonly zeroValue = "0000000000000000000000000000000000000000000000000000000000000000";
+  // readonly zeroValue = "0000000000000000000000000000000000000000000000000000000000000000";
+  readonly zeroValue = "18d85f3de6dcd78b6ffbf5d8374433a5528d8e3bf2100df0b7bb43a4c59ebd63"; // sha256("simple_shield")
   levels: number;
   hashLeftRight: (barretenberg: BarretenbergWasm, left: string, right: string) => string;
   storage: Map<string, string>;
