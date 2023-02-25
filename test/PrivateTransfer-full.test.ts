@@ -79,7 +79,6 @@ describe("Private Transfer works with Solidity verifier", () => {
   let commitments: string[] = [];
 
   before("Set up PrivateTransfer and Verifier contracts", async () => {
-    // console.log('got here');
     PrivateTransfer = await ethers.getContractFactory("PrivateTransfer");
     Verifier = await ethers.getContractFactory("TurboVerifierPrivateTransfer");
 
@@ -87,21 +86,13 @@ describe("Private Transfer works with Solidity verifier", () => {
     const hasherArtifactString = Buffer.from(hasherArtifactData).toString('utf8')
 
     const hasherParsedArtifact = JSON.parse(hasherArtifactString)
-    // console.log(hasherParsedArtifact)
 
     Hasher = new ContractFactory(hasherParsedArtifact.abi, hasherParsedArtifact.bytecode, signers[0]);
-    // console.log('got Hasher ContractFactory');
 
     commitments.push(`0x` + transfers[0].note_commitment.toString('hex'), `0x` + transfers[1].note_commitment.toString('hex')); 
 
     verifierContract = await Verifier.deploy();
-    // console.log('verifier deployed');
-
     hasherContract = await Hasher.deploy();
-    // console.log('hasher deployed');
-    // console.dir(hasherContract);
-    // console.log('hasherContract.address: ', hasherContract.address);
-    // privateTransfer = await PrivateTransfer.deploy(verifierContract.address, hasherContract.address, amount, `0x` + note_root, commitments, { value: BigNumber.from(numCommitments).mul(privateTransactionAmount) } );
     privateTransfer = await PrivateTransfer.deploy(verifierContract.address, hasherContract.address, amount, 3 );
   })
 
