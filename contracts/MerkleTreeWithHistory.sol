@@ -8,10 +8,6 @@ interface IHasher {
   function MiMCpe7(uint256 in_xL, uint256 in_xR) external pure returns (uint256 out_x);
 }
 
-// interface IHasher {
-//   function MiMCSponge(uint256 in_xL, uint256 in_xR, uint256 k) external pure returns (uint256 xL, uint256 xR);
-// }
-
 contract MerkleTreeWithHistory {
   uint256 public constant FIELD_SIZE = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
   uint256 public constant ZERO_VALUE = 11237804666762892337261927141475050497255385386905029870942060923073236745571; // = sha256("simple_shield")

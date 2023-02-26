@@ -26,23 +26,6 @@ contract PrivateTransfer is MerkleTreeWithHistory, ReentrancyGuard {
     event Deposit(bytes32 indexed commitments, uint32 leafIndex, uint256 timestamp);
     event Withdrawal(address to, bytes32 nullifierHashes);
 
-    // constructor(
-    //     IVerifier _verifier,
-    //     uint256 _amount,
-    //     bytes32 _root,
-    //     uint256[] memory _commitments
-    //     // Hasher _hasher Will need a hasher to switch to an on-chain merkle tree
-    // ) payable {
-    //     require(_amount > 0, "denomination should be greater than zero");
-    //     require(msg.value > 0, "value of commitments to withdraw must be greater than zero");
-    //     verifier = _verifier;
-    //     amount = _amount;
-    //     root = _root;
-    //     for (uint i = 0; i < _commitments.length; i++) {
-    //         commitments[_commitments[i]] = true;
-    //     }
-    // }
-
     /**
         @dev The constructor
         @param _verifier the address of SNARK verifier for this contract
@@ -85,13 +68,9 @@ contract PrivateTransfer is MerkleTreeWithHistory, ReentrancyGuard {
         - optional fee that goes to the transaction sender (usually a relay)
     */
     function withdraw(
-        bytes calldata proof, // TOOD: separate public inputs before 
-        bytes32 _root,
-        bytes32 _commitment
+        bytes calldata proof,
+        bytes32 _root
     ) external payable nonReentrant {
-        // console.log('_root: ');
-        // console.logBytes32(_root);
-
         uint256 recipient;
         bytes32 _nullifierHash;
         assembly {
@@ -101,9 +80,7 @@ contract PrivateTransfer is MerkleTreeWithHistory, ReentrancyGuard {
         address payable _recipient = payable(address(uint160(recipient)));
 
         require(!nullifierHashes[_nullifierHash], "The note has been already spent");
-        // require(root == _root, "Cannot find your merkle root");
         require(isKnownRoot(_root), "Cannot find your merkle root");
-        require(commitments[_commitment], "Commitment is not found in the set!");
     
         bool proofResult = verifier.verify(proof);
         require(proofResult, "Invalid withdraw proof");

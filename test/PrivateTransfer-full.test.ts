@@ -74,7 +74,6 @@ describe("Private Transfer works with Solidity verifier", () => {
   let [Verifier, PrivateTransfer, Hasher]: ContractFactory[] = [];
   let [verifierContract, privateTransfer, hasherContract]: Contract[] = [];
 
-  const numCommitments: number = 2;
   const privateTransactionAmount: BigNumber = utils.parseEther("1.0");
   let commitments: string[] = [];
 
@@ -96,39 +95,12 @@ describe("Private Transfer works with Solidity verifier", () => {
     privateTransfer = await PrivateTransfer.deploy(verifierContract.address, hasherContract.address, amount, 3 );
   })
 
-  // it('should emit event', async () => {
-  //   let commitment = toFixedHex(42, true)
-  //   let logs = await privateTransfer.deposit(commitment, { value: privateTransactionAmount })
-
-  //   // logs[0].event.should.be.equal('Deposit')
-  //   // logs[0].args.commitment.should.be.equal(commitment)
-  //   // logs[0].args.leafIndex.should.be.eq.BN(0)
-  //   console.log('logs: ')
-  //   console.log(logs);
-  //   commitment = toFixedHex(12, true);
-  //   (logs = await privateTransfer.deposit(commitment, { value: privateTransactionAmount }))
-
-  //   // logs[0].event.should.be.equal('Deposit')
-  //   // logs[0].args.commitment.should.be.equal(commitment)
-  //   // logs[0].args.leafIndex.should.be.eq.BN(1)
-  //   // TODO: check logs
-  //   console.log(logs);
-  //   expect(true).to.equal(true);
-  // })
-
-  // it('should throw if there is a such commitment', async () => {
-  //   const commitment = toFixedHex(42, true)
-  //   await expect(privateTransfer.deposit(commitment, { value: privateTransactionAmount })).to.be.revertedWith('The commitment has been submitted');
-  // })
-
   it("Private transfer should work using Solidity verifier", async () => {
     tree.insert(transfers[0].note_commitment.toString('hex'));
     note_root = tree.root();
-    console.log('mimc tree root 0: 0x', tree.root());
 
     let merkleProof = tree.proof(0);
     let note_hash_path = merkleProof.pathElements;
-    let nullifierHexString = `0x` + transfers[0].nullifier.toString('hex');
 
     const balanceUserBefore = await provider.getBalance(signers[0].address);
 
@@ -145,9 +117,8 @@ describe("Private Transfer works with Solidity verifier", () => {
       index: 0,
       note_hash_path: generateHashPathInput(note_hash_path),
       secret: `0x` + transfers[0].secret.toString('hex'),
+      nullifierHash: `0x` + transfers[0].nullifier.toString('hex'),
     };
-
-    console.log(abi);
 
     const proof = await create_proof(prover, acir, abi);
 
@@ -158,13 +129,13 @@ describe("Private Transfer works with Solidity verifier", () => {
     const fake_recipient = Buffer.from(serialise_public_inputs([signers[19].address]));
     let fake_proof: Buffer = Buffer.from(proof);
     fake_proof.fill(fake_recipient, 0, 32);
-    let args = [`0x` + fake_proof.toString('hex'), `0x` + note_root, commitments[0]];
+    let args = [`0x` + fake_proof.toString('hex'), `0x` + note_root];
     await expect(privateTransfer.withdraw(...args)).to.be.revertedWith('Proof failed');
 
     // Unaltered inputs should pass verification and perform a withdrawal
     const before = await provider.getBalance(recipient);
 
-    args = [`0x` + proof.toString('hex'), `0x` + note_root, commitments[0]];
+    args = [`0x` + proof.toString('hex'), `0x` + note_root];
 
     await privateTransfer.withdraw(...args);
 
@@ -179,9 +150,6 @@ describe("Private Transfer works with Solidity verifier", () => {
 
     let merkleProof = tree.proof(1);
     let note_hash_path = merkleProof.pathElements;
-
-    nullifier = pedersen.compressInputs([note_commitment, Buffer.from(toFixedHex(1, false), 'hex'), sender_priv_key]);
-    let nullifierHexString = `0x` + transfers[1].nullifier.toString('hex');
 
     const balanceUserBefore = await provider.getBalance(signers[0].address);
 
@@ -198,6 +166,7 @@ describe("Private Transfer works with Solidity verifier", () => {
       index: 1,
       note_hash_path: generateHashPathInput(note_hash_path),
       secret: `0x` + transfers[1].secret.toString('hex'),
+      nullifierHash: `0x` + transfers[1].nullifier.toString('hex'),
     };
     
     const proof = await create_proof(prover, acir, abi);
@@ -210,7 +179,7 @@ describe("Private Transfer works with Solidity verifier", () => {
 
     const before = await provider.getBalance(signers[2].address);
 
-    let args = [`0x` + proof.toString('hex'), `0x` + note_root, commitments[1]];
+    let args = [`0x` + proof.toString('hex'), `0x` + note_root];
     await privateTransfer.withdraw(...args);
 
     const after = await provider.getBalance(signers[2].address);

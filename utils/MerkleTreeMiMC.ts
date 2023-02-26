@@ -6,11 +6,6 @@ export function MiMC7(mimc7: MiMC, left: string, right: string): string {
     let left_hex = "0x" + "0".repeat(64 - left.length) + left;
     let right_hex = "0x" + "0".repeat(64 - right.length) + right;
 
-    // console.log('left_hex: ', left_hex);
-    // let left_hash = mimc7.hash(mimc7.F.e(left_hex), mimc7.F.e("0x" + "0".repeat(64)))
-    // let left_hash = mimc7.hash(left_hex, "0x" + "0".repeat(64))
-    // console.log('left_hash: ', mimc7.F.toString(left_hash, 16));
-
     let hash = mimc7.multiHash([left_hex, right_hex]);
     let hex = mimc7.F.toString(hash, 16);
     let padded_hex = "0".repeat(64 - hex.length) + hex;
@@ -30,7 +25,6 @@ export interface IMerkleTree {
 }
 
 export class MerkleTreeMiMC implements IMerkleTree {
-//   readonly zeroValue = "0000000000000000000000000000000000000000000000000000000000000000";
   readonly zeroValue = "18d85f3de6dcd78b6ffbf5d8374433a5528d8e3bf2100df0b7bb43a4c59ebd63"; // sha256("simple_shield")
   levels: number;
   hashLeftRight: (mimc7: MiMC, left: string, right: string) => string;

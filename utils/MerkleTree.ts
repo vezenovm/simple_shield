@@ -26,7 +26,6 @@ export interface IMerkleTree {
 }
 
 export class MerkleTree implements IMerkleTree {
-  // readonly zeroValue = "0000000000000000000000000000000000000000000000000000000000000000";
   readonly zeroValue = "18d85f3de6dcd78b6ffbf5d8374433a5528d8e3bf2100df0b7bb43a4c59ebd63"; // sha256("simple_shield")
   levels: number;
   hashLeftRight: (barretenberg: BarretenbergWasm, left: string, right: string) => string;
