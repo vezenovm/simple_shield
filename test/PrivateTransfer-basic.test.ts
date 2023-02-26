@@ -71,7 +71,6 @@ describe("Noir circuit verifies succesfully using Typescript", () => {
   it("Simple shield works for merkle tree insert, compiled using nargo", async () => {
     let merkleProof = tree.proof(0);
     let note_hash_path = merkleProof.pathElements
-    // console.log(transfers[0].nullifier.toString('hex'));
 
     let abi = {
       recipient: recipient,
