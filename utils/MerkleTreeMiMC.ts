@@ -50,7 +50,6 @@ export class MerkleTreeMiMC implements IMerkleTree {
     this.zeros.push(currentZero);
     for (let i = 0; i < levels; i++) {
       currentZero = this.hashLeftRight(mimc7, currentZero, currentZero);
-      console.log(currentZero);
       this.zeros.push(currentZero);
     }
 

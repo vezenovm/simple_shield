@@ -13,7 +13,7 @@ fn main(
   secret: Field,
   // Hash to be checked against the nullifier computed in the circuit
   nullifierHash: pub Field, 
-) -> pub [Field; 2] {
+) -> pub Field {
     // Compute public key from private key to show ownership
     let pubkey = std::scalar_mul::fixed_base(priv_key);
     let pubkey_x = pubkey[0];
@@ -25,15 +25,13 @@ fn main(
     // Compute input note nullifier
     let nullifier = std::hash::pedersen([note_commitment[0], index, priv_key]);
     constrain nullifierHash == nullifier[0];
-    
+
     // Check that the input note commitment is in the root
     let new_root = compute_root_from_leaf(note_commitment[0], index, note_hash_path);
-    // TODO: Can't use println with the TS packages
-    // std::println(new_root);
     constrain new_root == note_root;
     
     // Cannot have unused variables, return the recipient as public output of the circuit
-    [nullifier[0], recipient]
+    recipient
 }
 
 // Returns the root of the tree from the provided leaf and its hashpath, using mimc hash

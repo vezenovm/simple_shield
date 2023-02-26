@@ -6,18 +6,16 @@ import { BigNumber, Contract, ContractFactory, utils } from "ethers";
 import { expect } from "chai";
 import { readFileSync } from 'fs';
 import path from 'path';
-import { randomBytes } from 'crypto'
 import { compile, acir_read_bytes } from '@noir-lang/noir_wasm';
 // @ts-ignore -- no types
 import { setup_generic_prover_and_verifier, create_proof, verify_proof, StandardExampleProver, StandardExampleVerifier, getCircuitSize } from '@noir-lang/barretenberg';
 // @ts-ignore -- no types
 import { BarretenbergWasm } from '@noir-lang/barretenberg';
 // @ts-ignore -- no types
-import { SinglePedersen } from '@noir-lang/barretenberg';
-// @ts-ignore -- no types
-import { Schnorr } from '@noir-lang/barretenberg';
+import { SinglePedersen, Schnorr } from '@noir-lang/barretenberg';
 import { serialise_public_inputs } from '@noir-lang/aztec_backend';
 import { MerkleTreeMiMC } from "../utils/MerkleTreeMiMC";
+import {path_to_uint8array, generateHashPathInput, generateTestTransfers, Transfer } from '../utils/test_helpers';
 // @ts-ignore -- no types
 import { buildMimc7 as buildMimc } from 'circomlibjs';
 // TODO: add mimc sponge to Noir, currently only mimc7
@@ -26,23 +24,13 @@ import { buildMimc7 as buildMimc } from 'circomlibjs';
 const amount = process.env.ETH_AMOUNT || "1000000000000000000"; // 1 ether
 
 let signers: SignerWithAddress[];
+let recipient: string;
+
 let tree: MerkleTreeMiMC;
 let note_root: string;
 let barretenberg: BarretenbergWasm;
 let pedersen: SinglePedersen;
 
-let recipient: string;
-let sender_priv_key: Buffer;
-let sender_pubkey_x;
-let sender_pubkey_y;
-let nullifier: Buffer;
-let note_commitment: Buffer;
-
-interface Transfer {
-  note_commitment: Buffer,
-  secret: Buffer,
-  nullifier: Buffer
-}
 // Array of transfer objects to group data necessary for tests
 let transfers: Transfer[] = [];
 
@@ -58,7 +46,7 @@ before(async () => {
   pedersen = new SinglePedersen(barretenberg);
   let schnorr = new Schnorr(barretenberg);
 
-  let test_transfers = generateTestTransfers(3, schnorr);
+  let test_transfers = generateTestTransfers(3, schnorr, pedersen);
   transfers.push(...test_transfers);
   
   let mimc = await buildMimc();
@@ -112,7 +100,7 @@ describe("Private Transfer works with Solidity verifier", () => {
 
     let abi = {
       recipient: recipient,
-      priv_key: `0x` + sender_priv_key.toString('hex'),
+      priv_key: `0x` + transfers[0].sender_priv_key.toString('hex'),
       note_root: `0x` + note_root, 
       index: 0,
       note_hash_path: generateHashPathInput(note_hash_path),
@@ -161,7 +149,7 @@ describe("Private Transfer works with Solidity verifier", () => {
 
     let abi = {
       recipient: signers[2].address,
-      priv_key: `0x` + sender_priv_key.toString('hex'),
+      priv_key: `0x` + transfers[1].sender_priv_key.toString('hex'),
       note_root: `0x` + note_root, 
       index: 1,
       note_hash_path: generateHashPathInput(note_hash_path),
@@ -188,54 +176,6 @@ describe("Private Transfer works with Solidity verifier", () => {
   });
 
 });
-
-function path_to_uint8array(path: string) {
-  let buffer = readFileSync(path);
-  return new Uint8Array(buffer);
-}
-
-const toFixedHex = (number: number, pad0x: boolean, length = 32) => {
-  let hexString = number.toString(16).padStart(length * 2, '0');
-  return (pad0x ? `0x` + hexString : hexString);
-}
-
-function generateHashPathInput(hash_path: string[]) {
-  let hash_path_input = [];
-  for (var i = 0; i < hash_path.length; i++) {
-    hash_path_input.push(`0x` + hash_path[i]);
-  }
-  return hash_path_input;
-}
-
-function generateTestTransfers(num_transfers: number, schnorr: Schnorr) {
-  let transfers = [];
-  for (var i = 0; i < num_transfers; i++) {
-    sender_priv_key = Buffer.from("000000000000000000000000000000000000000000000000000000616c696365", "hex");
-    let sender_public_key = schnorr.computePublicKey(sender_priv_key);
-    sender_pubkey_x = sender_public_key.subarray(0, 32);
-    sender_pubkey_y = sender_public_key.subarray(32)
-    console.log('sender public key x: ' + sender_pubkey_x.toString('hex') + ', sender pubkey y: ' + sender_pubkey_y.toString('hex'));
-    
-    const secret = randomBytes(32)
-    // Constant secret that is used for testing
-    // const secret = Buffer.from("1929ea3ab8d9106a899386883d9428f8256cfedb3c4f6b66bf4aa4d28a79988f", "hex");
-    
-    // Pedersen is declared globally 
-    note_commitment = pedersen.compressInputs([sender_pubkey_x, sender_pubkey_y, secret]);
-    console.log('note_commitment: ' + note_commitment.toString('hex'));
-
-    nullifier = pedersen.compressInputs([note_commitment, Buffer.from(toFixedHex(i, false), 'hex'), sender_priv_key]);
-    console.log('nullifier: ' + nullifier.toString('hex'));
-
-    let transfer: Transfer = {
-      note_commitment: note_commitment,
-      secret: secret,
-      nullifier: nullifier
-    };
-    transfers.push(transfer);
-  }
-  return transfers;
-}
   
 
 

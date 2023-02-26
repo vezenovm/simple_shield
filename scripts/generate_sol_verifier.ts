@@ -2,7 +2,8 @@ import { resolve, join } from 'path';
 import { acir_read_bytes } from '@noir-lang/noir_wasm';
 // @ts-ignore -- no types
 import { setup_generic_prover_and_verifier } from '@noir-lang/barretenberg';
-import { writeFileSync, readFileSync } from 'fs';
+import { writeFileSync } from 'fs';
+import { path_to_uint8array } from '../utils/test_helpers';
 
 async function generate_sol_verifier() {
     let acirByteArray = path_to_uint8array(resolve(__dirname, '../circuits/target/p.acir'));
@@ -23,8 +24,3 @@ function syncWriteFile(filename: string, data: any) {
 }
 
 generate_sol_verifier().then(() => process.exit(0)).catch(console.log);
-
-function path_to_uint8array(path: string) {
-  let buffer = readFileSync(path);
-  return new Uint8Array(buffer);
-}

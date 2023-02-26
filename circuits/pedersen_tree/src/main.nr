@@ -10,8 +10,10 @@ fn main(
   index : Field,
   note_hash_path : [Field; 3],
   // Random secret to keep note_commitment private
-  secret: Field
-) -> pub [Field; 2] {
+  secret: Field,
+    // Hash to be checked against the nullifier computed in the circuit
+  nullifierHash: pub Field, 
+) -> pub Field {
     // Compute public key from private key to show ownership
     let pubkey = std::scalar_mul::fixed_base(priv_key);
     let pubkey_x = pubkey[0];
@@ -22,6 +24,7 @@ fn main(
     
     // Compute input note nullifier
     let nullifier = std::hash::pedersen([note_commitment[0], index, priv_key]);
+    constrain nullifierHash == nullifier[0];
 
     // TODO: check_membership is broken with the TS prover
     // Check that the input note commitment is in the root
@@ -35,5 +38,5 @@ fn main(
     // std::println(new_root);
     
     // Cannot have unused variables, return the recipient as public output of the circuit
-    [nullifier[0], recipient]
+    recipient
 }
