@@ -1,17 +1,16 @@
 // @ts-ignore -- no types
-import { SinglePedersen } from '@noir-lang/barretenberg';
-// @ts-ignore -- no types
-import { BarretenbergWasm } from '@noir-lang/barretenberg';
+import { Mimc7 as MiMC } from 'circomlibjs';
 
-export function pedersenLeftRight(
-  barretenberg: BarretenbergWasm, 
-  left: string, 
-  right: string): string {
-    let leftBuffer = Buffer.from(left, 'hex');
-    let rightBuffer = Buffer.from(right, 'hex');
-    let pedersen = new SinglePedersen(barretenberg);
-    let hashRes = pedersen.compress(leftBuffer, rightBuffer);
-    return hashRes.toString('hex')
+export function MiMC7(mimc7: MiMC, left: string, right: string): string {
+
+    let left_hex = "0x" + "0".repeat(64 - left.length) + left;
+    let right_hex = "0x" + "0".repeat(64 - right.length) + right;
+
+    let hash = mimc7.multiHash([left_hex, right_hex]);
+    let hex = mimc7.F.toString(hash, 16);
+    let padded_hex = "0".repeat(64 - hex.length) + hex;
+
+    return padded_hex;
 }
 
 export interface IMerkleTree {
@@ -25,32 +24,32 @@ export interface IMerkleTree {
   insert: (leaf: string) => void;
 }
 
-export class MerkleTree implements IMerkleTree {
+export class MerkleTreeMiMC implements IMerkleTree {
   readonly zeroValue = "18d85f3de6dcd78b6ffbf5d8374433a5528d8e3bf2100df0b7bb43a4c59ebd63"; // sha256("simple_shield")
   levels: number;
-  hashLeftRight: (barretenberg: BarretenbergWasm, left: string, right: string) => string;
+  hashLeftRight: (mimc7: MiMC, left: string, right: string) => string;
   storage: Map<string, string>;
   zeros: string[];
   totalLeaves: number;
-  barretenberg: BarretenbergWasm;
+  mimc7: MiMC;
 
   constructor(
     levels: number, 
-    barretenberg: BarretenbergWasm,
+    mimc7: MiMC,
     defaultLeaves: string[] = [], 
-    hashLeftRight = pedersenLeftRight) {
+    hashLeftRight = MiMC7) {
     this.levels = levels;
     this.hashLeftRight = hashLeftRight;
     this.storage = new Map();
     this.zeros = [];
     this.totalLeaves = 0;
-    this.barretenberg = barretenberg;
+    this.mimc7 = mimc7;
 
     // build zeros depends on tree levels
     let currentZero = this.zeroValue;
     this.zeros.push(currentZero);
     for (let i = 0; i < levels; i++) {
-      currentZero = this.hashLeftRight(barretenberg, currentZero, currentZero);
+      currentZero = this.hashLeftRight(mimc7, currentZero, currentZero);
       this.zeros.push(currentZero);
     }
 
@@ -60,7 +59,7 @@ export class MerkleTree implements IMerkleTree {
       // store leaves with key value pair
       let level = 0;
       defaultLeaves.forEach((leaf, index) => {
-        this.storage.set(MerkleTree.indexToKey(level, index), leaf);
+        this.storage.set(MerkleTreeMiMC.indexToKey(level, index), leaf);
       });
 
       // build tree with initial leaves
@@ -68,19 +67,23 @@ export class MerkleTree implements IMerkleTree {
       let numberOfNodesInLevel = Math.ceil(this.totalLeaves / 2);
       for (level; level <= this.levels; level++) {
         for (let i = 0; i < numberOfNodesInLevel; i++) {
-          const leftKey = MerkleTree.indexToKey(level - 1, 2 * i);
-          const rightKey = MerkleTree.indexToKey(level - 1, 2 * i + 1);
+          const leftKey = MerkleTreeMiMC.indexToKey(level - 1, 2 * i);
+          const rightKey = MerkleTreeMiMC.indexToKey(level - 1, 2 * i + 1);
 
           const left = this.storage.get(leftKey);
           const right = this.storage.get(rightKey) || this.zeros[level - 1];
           if (!left) throw new Error("leftKey not found");
 
-          const node = this.hashLeftRight(barretenberg, left, right);
-          this.storage.set(MerkleTree.indexToKey(level, i), node);
+          const node = this.hashLeftRight(mimc7, left, right);
+          this.storage.set(MerkleTreeMiMC.indexToKey(level, i), node);
         }
         numberOfNodesInLevel = Math.ceil(numberOfNodesInLevel / 2);
       }
     }
+  }
+
+  getZeros(): string[] {
+    return this.zeros;
   }
 
   static indexToKey(level: number, index: number): string {
@@ -97,19 +100,19 @@ export class MerkleTree implements IMerkleTree {
   }
 
   root(): string {
-    return this.storage.get(MerkleTree.indexToKey(this.levels, 0)) || this.zeros[this.levels];
+    return this.storage.get(MerkleTreeMiMC.indexToKey(this.levels, 0)) || this.zeros[this.levels];
   }
 
   proof(indexOfLeaf: number) {
     let pathElements: string[] = [];
     let pathIndices: number[] = [];
 
-    const leaf = this.storage.get(MerkleTree.indexToKey(0, indexOfLeaf));
+    const leaf = this.storage.get(MerkleTreeMiMC.indexToKey(0, indexOfLeaf));
     if (!leaf) throw new Error("leaf not found");
 
     // store sibling into pathElements and target's indices into pathIndices
     const handleIndex = (level: number, currentIndex: number, siblingIndex: number) => {
-      const siblingValue = this.storage.get(MerkleTree.indexToKey(level, siblingIndex)) || this.zeros[level];
+      const siblingValue = this.storage.get(MerkleTreeMiMC.indexToKey(level, siblingIndex)) || this.zeros[level];
       pathElements.push(siblingValue);
       pathIndices.push(currentIndex % 2);
     };
@@ -141,7 +144,7 @@ export class MerkleTree implements IMerkleTree {
     let currentElement: string = newLeaf;
 
     const handleIndex = (level: number, currentIndex: number, siblingIndex: number) => {
-      const siblingElement = this.storage.get(MerkleTree.indexToKey(level, siblingIndex)) || this.zeros[level];
+      const siblingElement = this.storage.get(MerkleTreeMiMC.indexToKey(level, siblingIndex)) || this.zeros[level];
 
       let left: string;
       let right: string;
@@ -154,17 +157,18 @@ export class MerkleTree implements IMerkleTree {
       }
 
       keyValueToStore.push({
-        key: MerkleTree.indexToKey(level, currentIndex),
+        key: MerkleTreeMiMC.indexToKey(level, currentIndex),
         value: currentElement,
       });
-      currentElement = this.hashLeftRight(this.barretenberg, left, right);
+      
+      currentElement = this.hashLeftRight(this.mimc7, left, right);
     };
 
     this.traverse(index, handleIndex);
 
     // push root to the end
     keyValueToStore.push({
-      key: MerkleTree.indexToKey(this.levels, 0),
+      key: MerkleTreeMiMC.indexToKey(this.levels, 0),
       value: currentElement,
     });
 
