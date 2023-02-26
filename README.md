@@ -84,7 +84,14 @@ It is important to note that if you change your circuit and want to verify proof
 
 ### Running tests
 
-The tests show both the method of compiling the circuit using `nargo` and in Typescript. The tests also show how to complete proof verification using Typescript as well as with the Solidity verifier. Thus, to have all tests pass, it is necessary you follow all the commands listed or change the tests to your preferred method of compilation and/or proof verification.
+The tests use the method of compiling the circuit using `nargo`. The tests also show how to complete proof verification using Typescript as well as with the Solidity verifier. Thus, to have all tests pass, it is necessary you follow all the commands listed or change the tests to your preferred method of compilation and/or proof verification.
+
+The full private transfer app uses a MiMC hasher contract for calculating merkle tree roots. In order for all the tests to pass you must compile the hasher contract separately. 
+
+```
+mkdir build
+npx ts-node ./scripts/compileHasher.ts
+```
 
 This command will compile the Solidity verifier within the `contracts` folder and run all tests inside `./test/PrivateTransfer-full.test.ts`.
 ```
