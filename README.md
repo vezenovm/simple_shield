@@ -3,7 +3,7 @@ Basic Noir anonymous proof of membership
 
 ## Requirements
 
-- Noir is based upon [Rust](https://www.rust-lang.org/tools/install), and we will need to Noir's package manager `nargo` in order to compile our circuits. Further installation instructions for can be found [here](https://noir-lang.github.io/book/getting_started/install.html).
+- Noir is based upon [Rust](https://www.rust-lang.org/tools/install), and we will need Noir's package manager `nargo` in order to compile our circuits. Further installation instructions can be found [here](https://noir-lang.org/getting_started/nargo_installation).
 - The typescript tests and contracts live within a hardhat project, where we use [yarn](https://classic.yarnpkg.com/lang/en/docs/install/#mac-stable) as the package manager.
 
 ## Development
