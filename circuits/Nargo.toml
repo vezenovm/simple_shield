@@ -1,0 +1,5 @@
+[workspace]
+members = [
+    "mimc_tree",
+    "pedersen_tree"
+]

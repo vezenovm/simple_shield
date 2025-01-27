@@ -28,7 +28,7 @@ let barretenberg: UltraPlonkBackend;
 // Array of transfer objects to group data necessary for tests
 let transfers: Transfer[] = [];
 
-const acir: CompiledCircuit = JSON.parse(readFileSync(path.resolve(__dirname, '../circuits/mimc_tree/target/mimc_tree.json')).toString());
+const acir: CompiledCircuit = JSON.parse(readFileSync(path.resolve(__dirname, '../circuits/target/mimc_tree.json')).toString());
 
 before(async () => {
   signers = await ethers.getSigners();

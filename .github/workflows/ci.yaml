@@ -35,12 +35,8 @@ jobs:
         with:
           toolchain: 1.0.0-beta.1
 
-      - name: Compile pedersen circuit
-        working-directory: ./circuits/pedersen_tree
-        run: nargo compile
-
-      - name: Compile mimc circuit
-        working-directory: ./circuits/mimc_tree
+      - name: Compile circuits
+        working-directory: ./circuits/
         run: nargo compile
 
       - name: Run tests
