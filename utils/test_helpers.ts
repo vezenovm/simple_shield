@@ -1,18 +1,13 @@
 import { randomBytes } from 'crypto'
 import { readFileSync } from 'fs';
 // @ts-ignore -- no types
-import { SinglePedersen, Schnorr } from '@noir-lang/barretenberg';
+import { SinglePedersen, Schnorr } from '@aztec/bb.js';
 
-export function path_to_uint8array(path: string) {
-    let buffer = readFileSync(path);
-    return new Uint8Array(buffer);
-  }
-  
 const toFixedHex = (number: number, pad0x: boolean, length = 32) => {
   let hexString = number.toString(16).padStart(length * 2, '0');
   return (pad0x ? `0x` + hexString : hexString);
 }
-  
+
 export function generateHashPathInput(hash_path: string[]) {
   let hash_path_input = [];
   for (var i = 0; i < hash_path.length; i++) {
@@ -22,12 +17,12 @@ export function generateHashPathInput(hash_path: string[]) {
 }
 
 export interface Transfer {
-    sender_priv_key: Buffer,
-    note_commitment: Buffer,
-    secret: Buffer,
-    nullifier: Buffer
+  sender_priv_key: Buffer,
+  note_commitment: Buffer,
+  secret: Buffer,
+  nullifier: Buffer
 }
-  
+
 export function generateTestTransfers(num_transfers: number, schnorr: Schnorr, pedersen: SinglePedersen) {
   let transfers = [];
   for (var i = 0; i < num_transfers; i++) {
@@ -35,7 +30,7 @@ export function generateTestTransfers(num_transfers: number, schnorr: Schnorr, p
     let sender_public_key = schnorr.computePublicKey(sender_priv_key);
     let sender_pubkey_x = sender_public_key.subarray(0, 32);
     let sender_pubkey_y = sender_public_key.subarray(32)
-    
+
     const secret = randomBytes(32)
     // Constant secret that is used for testing
     // const secret = Buffer.from("1929ea3ab8d9106a899386883d9428f8256cfedb3c4f6b66bf4aa4d28a79988f", "hex");
@@ -46,10 +41,10 @@ export function generateTestTransfers(num_transfers: number, schnorr: Schnorr, p
     let nullifier = pedersen.compressInputs([note_commitment, Buffer.from(toFixedHex(i, false), 'hex'), sender_priv_key]);
 
     let transfer: Transfer = {
-        sender_priv_key: sender_priv_key,
-        note_commitment: note_commitment,
-        secret: secret,
-        nullifier: nullifier
+      sender_priv_key: sender_priv_key,
+      note_commitment: note_commitment,
+      secret: secret,
+      nullifier: nullifier
     };
     transfers.push(transfer);
   }

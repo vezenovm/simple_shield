@@ -6,18 +6,12 @@ import { BigNumber, Contract, ContractFactory, utils } from "ethers";
 import { expect } from "chai";
 import { readFileSync } from 'fs';
 import path from 'path';
-import { compile, acir_read_bytes } from '@noir-lang/noir_wasm';
-// @ts-ignore -- no types
-import { setup_generic_prover_and_verifier, create_proof, verify_proof, StandardExampleProver, StandardExampleVerifier, getCircuitSize } from '@noir-lang/barretenberg';
-// @ts-ignore -- no types
-import { BarretenbergWasm } from '@noir-lang/barretenberg';
-// @ts-ignore -- no types
-import { SinglePedersen, Schnorr } from '@noir-lang/barretenberg';
-import { serialise_public_inputs } from '@noir-lang/aztec_backend';
 import { MerkleTreeMiMC } from "../utils/MerkleTreeMiMC";
-import {path_to_uint8array, generateHashPathInput, generateTestTransfers, Transfer } from '../utils/test_helpers';
+import { path_to_uint8array, generateHashPathInput, generateTestTransfers, Transfer } from '../utils/test_helpers';
 // @ts-ignore -- no types
 import { buildMimc7 as buildMimc } from 'circomlibjs';
+import { CompiledCircuit, Noir } from "@noir-lang/noir_js";
+import { UltraPlonkBackend } from "@aztec/bb.js";
 // TODO: add mimc sponge to Noir, currently only mimc7
 // import { buildMimcSponge as buildMimc } from 'circomlibjs';
 
@@ -28,34 +22,27 @@ let recipient: string;
 
 let tree: MerkleTreeMiMC;
 let note_root: string;
-let barretenberg: BarretenbergWasm;
-let pedersen: SinglePedersen;
+let barretenberg: UltraPlonkBackend;
+
 
 // Array of transfer objects to group data necessary for tests
 let transfers: Transfer[] = [];
 
-let acir: any;
-let prover: StandardExampleProver;
-let verifier: StandardExampleVerifier;
+const acir: CompiledCircuit = JSON.parse(readFileSync(path.resolve(__dirname, '../circuits/mimc_tree/target/mimc_tree.json')).toString());
 
-before(async () => {  
+before(async () => {
   signers = await ethers.getSigners();
   recipient = signers[1].address;
-  barretenberg = await BarretenbergWasm.new();
-  await barretenberg.init()
+  barretenberg = new UltraPlonkBackend(acir.bytecode);
+
   pedersen = new SinglePedersen(barretenberg);
   let schnorr = new Schnorr(barretenberg);
 
   let test_transfers = generateTestTransfers(3, schnorr, pedersen);
   transfers.push(...test_transfers);
-  
+
   let mimc = await buildMimc();
   tree = new MerkleTreeMiMC(3, mimc);
-
-  let acirByteArray = path_to_uint8array(path.resolve(__dirname, '../circuits/mimc_tree/target/c.acir'));
-  acir = acir_read_bytes(acirByteArray);
-
-  [prover, verifier] = await setup_generic_prover_and_verifier(acir);
 });
 
 describe("Private Transfer works with Solidity verifier", () => {
@@ -76,11 +63,11 @@ describe("Private Transfer works with Solidity verifier", () => {
 
     Hasher = new ContractFactory(hasherParsedArtifact.abi, hasherParsedArtifact.bytecode, signers[0]);
 
-    commitments.push(`0x` + transfers[0].note_commitment.toString('hex'), `0x` + transfers[1].note_commitment.toString('hex')); 
+    commitments.push(`0x` + transfers[0].note_commitment.toString('hex'), `0x` + transfers[1].note_commitment.toString('hex'));
 
     verifierContract = await Verifier.deploy();
     hasherContract = await Hasher.deploy();
-    privateTransfer = await PrivateTransfer.deploy(verifierContract.address, hasherContract.address, amount, 3 );
+    privateTransfer = await PrivateTransfer.deploy(verifierContract.address, hasherContract.address, amount, 3);
   })
 
   it("Private transfer should work using Solidity verifier", async () => {
@@ -101,16 +88,18 @@ describe("Private Transfer works with Solidity verifier", () => {
     let abi = {
       recipient: recipient,
       priv_key: `0x` + transfers[0].sender_priv_key.toString('hex'),
-      note_root: `0x` + note_root, 
+      note_root: `0x` + note_root,
       index: 0,
       note_hash_path: generateHashPathInput(note_hash_path),
       secret: `0x` + transfers[0].secret.toString('hex'),
       nullifierHash: `0x` + transfers[0].nullifier.toString('hex'),
     };
 
-    const proof = await create_proof(prover, acir, abi);
+    const { witness } = await (new Noir(acir).execute(abi));
 
-    const verified = await verify_proof(verifier, proof);
+    const proof = await barretenberg.generateProof(witness);
+
+    const verified = await barretenberg.verifyProof(proof);
     expect(verified).eq(true);
 
     // Attempt to alter recipient should fail verification
@@ -150,16 +139,18 @@ describe("Private Transfer works with Solidity verifier", () => {
     let abi = {
       recipient: signers[2].address,
       priv_key: `0x` + transfers[1].sender_priv_key.toString('hex'),
-      note_root: `0x` + note_root, 
+      note_root: `0x` + note_root,
       index: 1,
       note_hash_path: generateHashPathInput(note_hash_path),
       secret: `0x` + transfers[1].secret.toString('hex'),
       nullifierHash: `0x` + transfers[1].nullifier.toString('hex'),
     };
-    
-    const proof = await create_proof(prover, acir, abi);
 
-    const verified = await verify_proof(verifier, proof);
+    const { witness } = await (new Noir(acir).execute(abi));
+
+    const proof = await barretenberg.generateProof(witness);
+
+    const verified = await barretenberg.verifyProof(proof);
     expect(verified).eq(true);
 
     const sc_verified = await verifierContract.verify(proof);
@@ -176,6 +167,6 @@ describe("Private Transfer works with Solidity verifier", () => {
   });
 
 });
-  
+
 
 

@@ -1,17 +1,17 @@
 // @ts-ignore -- no types
-import { SinglePedersen } from '@noir-lang/barretenberg';
+import { SinglePedersen } from '@aztec/bb.js';
 // @ts-ignore -- no types
-import { BarretenbergWasm } from '@noir-lang/barretenberg';
+import { BarretenbergWasm } from '@aztec/bb.js';
 
 export function pedersenLeftRight(
-  barretenberg: BarretenbergWasm, 
-  left: string, 
+  barretenberg: BarretenbergWasm,
+  left: string,
   right: string): string {
-    let leftBuffer = Buffer.from(left, 'hex');
-    let rightBuffer = Buffer.from(right, 'hex');
-    let pedersen = new SinglePedersen(barretenberg);
-    let hashRes = pedersen.compress(leftBuffer, rightBuffer);
-    return hashRes.toString('hex')
+  let leftBuffer = Buffer.from(left, 'hex');
+  let rightBuffer = Buffer.from(right, 'hex');
+  let pedersen = new SinglePedersen(barretenberg);
+  let hashRes = pedersen.compress(leftBuffer, rightBuffer);
+  return hashRes.toString('hex')
 }
 
 export interface IMerkleTree {
@@ -35,9 +35,9 @@ export class MerkleTree implements IMerkleTree {
   barretenberg: BarretenbergWasm;
 
   constructor(
-    levels: number, 
+    levels: number,
     barretenberg: BarretenbergWasm,
-    defaultLeaves: string[] = [], 
+    defaultLeaves: string[] = [],
     hashLeftRight = pedersenLeftRight) {
     this.levels = levels;
     this.hashLeftRight = hashLeftRight;
