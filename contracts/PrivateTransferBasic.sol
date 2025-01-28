@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "hardhat/console.sol";
 
 interface IVerifier {
-    function verify(bytes calldata) external view returns (bool);
+    function verify(bytes calldata, bytes32[] calldata) external view returns (bool);
 }
 
 contract PrivateTransferBasic is ReentrancyGuard {
@@ -42,23 +42,20 @@ contract PrivateTransferBasic is ReentrancyGuard {
     }
 
     function withdraw(
-        bytes calldata proof, // TOOD: separate public inputs before 
+        bytes calldata proof,
+        address _recipient,
+        bytes32 _nullifierHash,
         bytes32 _root,
         uint256 _commitment
     ) external payable nonReentrant {
-        uint256 recipient;
-        bytes32 _nullifierHash;
-        assembly {
-                recipient := calldataload(add(calldataload(0x04), 0x24))
-                _nullifierHash := calldataload(add(calldataload(0x04), 0x64))
-        } 
-        address payable _recipient = payable(address(uint160(recipient)));
-
         require(!nullifierHashes[_nullifierHash], "The note has been already spent");
         require(root == _root, "Cannot find your merkle root");
         require(commitments[_commitment], "Commitment is not found in the set!");
     
-        bool proofResult = verifier.verify(proof);
+        bytes32[] memory public_inputs = new bytes32[](2);
+        public_inputs[0] = bytes32(uint256(uint160(_recipient)));
+        public_inputs[1] =_nullifierHash;
+        bool proofResult = verifier.verify(proof, public_inputs);
         require(proofResult, "Invalid withdraw proof");
 
         // Set nullifier hash to true
