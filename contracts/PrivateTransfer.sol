@@ -77,9 +77,11 @@ contract PrivateTransfer is MerkleTreeWithHistory, ReentrancyGuard {
         require(isKnownRoot(_root), "Cannot find your merkle root");
     
 
-        bytes32[] memory public_inputs = new bytes32[](2);
+        bytes32[] memory public_inputs = new bytes32[](4);
         public_inputs[0] = bytes32(uint256(uint160(_recipient)));
-        public_inputs[1] =_nullifierHash;
+        public_inputs[1] = _root;
+        public_inputs[2] = _nullifierHash;
+        public_inputs[3] = bytes32(uint256(uint160(_recipient)));
         bool proofResult = verifier.verify(proof, public_inputs);
         require(proofResult, "Invalid withdraw proof");
 

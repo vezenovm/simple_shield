@@ -147,7 +147,7 @@ describe("Private Transfer works with Solidity verifier", () => {
     privateTransfer = await PrivateTransfer.deploy(verifierContract.address, amount, note_root, commitments, { value: BigNumber.from(numCommitments).mul(privateTransactionAmount) }) as PrivateTransferBasic;
   })
 
-  it.only("Private transfer should work using Solidity verifier", async () => {
+  it("Private transfer should work using Solidity verifier", async () => {
     let merkleProof = tree.proof(0);
     let note_hash_path = merkleProof.pathElements;
 
@@ -161,8 +161,6 @@ describe("Private Transfer works with Solidity verifier", () => {
       secret: transfers[0].secret.toString(),
       nullifierHash,
     };
-
-    console.log(abi)
 
     const { witness } = await (new Noir(acir).execute(abi));
 
@@ -206,13 +204,12 @@ describe("Private Transfer works with Solidity verifier", () => {
     const verified = await backend.verifyProof(proof);
     expect(verified).eq(true);
 
-    const sc_verified = await verifierContract.verify(proof);
+    const sc_verified = await verifierContract.verify(proof.proof, proof.publicInputs);
     expect(sc_verified).eq(true);
 
     const before = await provider.getBalance(signers[2].address);
 
-    let args = [proof.proof,  proof.publicInputs[0], proof.publicInputs[1], note_root, commitments[1]];
-    await privateTransfer.withdraw(...args);
+    await privateTransfer.withdraw(proof.proof,  proof.publicInputs[0], proof.publicInputs[1], note_root, commitments[1]);
 
     const after = await provider.getBalance(signers[2].address);
 
