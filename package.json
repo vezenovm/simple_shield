@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "hardhat test"
   },
   "repository": {
     "type": "git",
@@ -40,10 +40,10 @@
     "zkp-merkle-airdrop-lib": "^1.0.5"
   },
   "dependencies": {
-    "@noir-lang/aztec_backend": "github:kobyhallx/aztec-backend#1bcdd4bf67dad1ab977867f1d655bcab7085a518",
-    "@noir-lang/barretenberg": "github:noir-lang/barretenberg#39a1547875f941ef6640217a42d8f34972425c97",
-    "@noir-lang/noir_wasm": "github:noir-lang/noir_wasm#344738adc66965fa20b0bb0c13a83ac5ceedf486",
-    "@noir-lang/noir-source-resolver": "^1.0.0",
+    "@aztec/bb.js": "0.66.0",
+    "@noir-lang/noir_js": "1.0.0-beta.1",
+    "@noir-lang/noirc_abi": "1.0.0-beta.1",
+    "@noir-lang/noir_wasm": "1.0.0-beta.1",
     "@openzeppelin/contracts": "^4.7.1",
     "@typechain/ethers-v5": "^10.1.0",
     "bigint-buffer": "^1.1.5",

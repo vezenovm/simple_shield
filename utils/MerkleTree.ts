@@ -1,17 +1,13 @@
-// @ts-ignore -- no types
-import { SinglePedersen } from '@noir-lang/barretenberg';
-// @ts-ignore -- no types
-import { BarretenbergWasm } from '@noir-lang/barretenberg';
+import { BarretenbergSync, Fr } from '@aztec/bb.js';
 
 export function pedersenLeftRight(
-  barretenberg: BarretenbergWasm, 
-  left: string, 
+  barretenberg: BarretenbergSync,
+  left: string,
   right: string): string {
-    let leftBuffer = Buffer.from(left, 'hex');
-    let rightBuffer = Buffer.from(right, 'hex');
-    let pedersen = new SinglePedersen(barretenberg);
-    let hashRes = pedersen.compress(leftBuffer, rightBuffer);
-    return hashRes.toString('hex')
+  let leftBuffer = Fr.fromString(left);
+  let rightBuffer = Fr.fromString(right);
+  let hashRes = barretenberg.pedersenHash([leftBuffer, rightBuffer], 0);
+  return hashRes.toString()
 }
 
 export interface IMerkleTree {
@@ -26,18 +22,18 @@ export interface IMerkleTree {
 }
 
 export class MerkleTree implements IMerkleTree {
-  readonly zeroValue = "18d85f3de6dcd78b6ffbf5d8374433a5528d8e3bf2100df0b7bb43a4c59ebd63"; // sha256("simple_shield")
+  readonly zeroValue = "0x18d85f3de6dcd78b6ffbf5d8374433a5528d8e3bf2100df0b7bb43a4c59ebd63"; // sha256("simple_shield")
   levels: number;
-  hashLeftRight: (barretenberg: BarretenbergWasm, left: string, right: string) => string;
+  hashLeftRight: (barretenberg: BarretenbergSync, left: string, right: string) => string;
   storage: Map<string, string>;
   zeros: string[];
   totalLeaves: number;
-  barretenberg: BarretenbergWasm;
+  barretenberg: BarretenbergSync;
 
   constructor(
-    levels: number, 
-    barretenberg: BarretenbergWasm,
-    defaultLeaves: string[] = [], 
+    levels: number,
+    barretenberg: BarretenbergSync,
+    defaultLeaves: string[] = [],
     hashLeftRight = pedersenLeftRight) {
     this.levels = levels;
     this.hashLeftRight = hashLeftRight;
