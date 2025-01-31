@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "hardhat test"
+    "test": "mocha --timeout 60000"
   },
   "repository": {
     "type": "git",
@@ -19,19 +19,10 @@
   "devDependencies": {
     "@ethersproject/abi": "^5.6.4",
     "@ethersproject/providers": "^5.6.8",
-    "@nomicfoundation/hardhat-chai-matchers": "^1.0.2",
-    "@nomicfoundation/hardhat-network-helpers": "^1.0.3",
-    "@nomicfoundation/hardhat-toolbox": "^1.0.2",
-    "@nomiclabs/hardhat-ethers": "^2.1.0",
-    "@nomiclabs/hardhat-etherscan": "^3.1.0",
-    "@openzeppelin/hardhat-upgrades": "^1.19.1",
-    "@typechain/hardhat": "^6.1.2",
+    "@types/chai": "^5.0.1",
     "@types/memdown": "^3.0.0",
     "@types/mocha": "^9.1.1",
     "chai": "^4.3.6",
-    "ethers": "^5.6.9",
-    "hardhat": "^2.10.1",
-    "hardhat-gas-reporter": "^1.0.8",
     "snarkjs": "^0.4.24",
     "solidity-coverage": "^0.7.21",
     "ts-node": "^10.9.1",
@@ -42,11 +33,13 @@
   "dependencies": {
     "@aztec/bb.js": "0.66.0",
     "@noir-lang/noir_js": "1.0.0-beta.1",
-    "@noir-lang/noirc_abi": "1.0.0-beta.1",
     "@noir-lang/noir_wasm": "1.0.0-beta.1",
+    "@noir-lang/noirc_abi": "1.0.0-beta.1",
     "@openzeppelin/contracts": "^4.7.1",
     "@typechain/ethers-v5": "^10.1.0",
     "bigint-buffer": "^1.1.5",
-    "circomlibjs": "^0.1.7"
-  }
+    "circomlibjs": "^0.1.7",
+    "mocha": "^11.1.0"
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }
