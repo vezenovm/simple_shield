@@ -1,5 +1,5 @@
 # simple_shield
-Basic Noir anonymous proof of membership
+Basic Noir private proof of membership
 
 ## Requirements
 
